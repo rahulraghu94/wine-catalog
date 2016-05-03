@@ -28,6 +28,8 @@ class webServerHandler(BaseHTTPRequestHandler):
                                 
                                 for item in items:
                                         #count += 1decode
+                                        output += str(item.id)
+                                        output += " : "
                                         output += str(item.name)
                                         output += "<br>"
                                         output += "<a href = /"
@@ -114,6 +116,8 @@ class webServerHandler(BaseHTTPRequestHandler):
                 count = 1
                 items = session.query(Wine).all()
                 for item in items:
+                        if item.id != count:
+                                break
                         count += 1
 
                 try:
