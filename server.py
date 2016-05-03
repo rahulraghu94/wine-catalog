@@ -109,8 +109,8 @@ class webServerHandler(BaseHTTPRequestHandler):
                                 
                                 items = session.query(Wine).all()
                                 output = ""
-                                output += "<h1> Wines Present </h1> <br> <br>"
-                                output += "<h3> <a href = '/list/new'> Add a New Wine </a> </h3>"
+                                output += "<h1> <i> Your Wines </i></h1> <br>"
+                                output += "<h5 align='right'> <a href = '/list/new'> Add a New Wine </a> </h5>"
                                 
                                 for item in items:
                                         #count += 1decode
@@ -120,8 +120,10 @@ class webServerHandler(BaseHTTPRequestHandler):
                                         output += str(item.id)
                                         output += "/edit> Edit </a>"
                                         output += "<br>"
-                                        output += "<a href = '#'> Delete </a>"
-                                        output += "<br> <br>"
+                                        output += "<a href = /"
+                                        output += str(item.id)
+                                        output += "/delete> Delete </a>"
+                                        output += "<br> <hr>"
 
                                 self.wfile.write(output.encode(encoding = 'utf_8'))
                                 #print(count)
@@ -153,8 +155,9 @@ class webServerHandler(BaseHTTPRequestHandler):
                                         self.end_headers()
                                         output = "<html><body>"
                                         output += "<h1>"
+                                        output += "Edit " 
                                         output += str(wineName.name)
-                                        output += "</h1>"
+                                        output += " ?</h1>"
                                         output += "<form method='POST' enctype='multipart/form-data' action = '/list/"
                                         output += IDPath
                                         output += "/edit' >" 
@@ -168,16 +171,49 @@ class webServerHandler(BaseHTTPRequestHandler):
                                         self.wfile.write(output.encode(encoding = 'utf_8'))
                                         return
 
+                        if self.path.endswith("/delete"):
+                                print("delete entered")
+                                IDPath = self.path.split("/")[1]
+                                print(IDPath)
+                                wineName = session.query(Wine).filter_by(id=IDPath).one()
+                                if wineName:
+                                        self.send_response(200)
+                                        self.send_header('Content-type', 'text/html')
+                                        self.end_headers()
+                                        output = ""
+                                        output += "<html><body>"
+                                        output += "<h1>Are you sure you want to delete "
+                                        output += str(wineName.name)
+                                        output += "?"
+                                        output += "<form method='POST' enctype = 'multipart/form-data' action = '/restaurants/"
+                                        output += IDPath 
+                                        output += "/delete'>" 
+                                        output += "<input type = 'submit' value = 'Delete'>"
+                                        output += "</form>"
+                                        output += "</body></html>"
+                                        self.wfile.write(output.encode(encoding = 'utf_8'))
+
                 except:
                         traceback.print_exc()
 
         def do_POST(self):
-                count = 0
+                count = 1
                 items = session.query(Wine).all()
                 for item in items:
                         count += 1
-                count +=1
+
                 try:
+                        if self.path.endswith("/delete"):
+                                IDPath = self.path.split("/")[2]
+                                wineName = session.query(Wine).filter_by(id=IDPath).one()
+                                if wineName:
+                                        session.delete(wineName)
+                                        session.commit()
+                                        self.send_response(301)
+                                        self.send_header('Content-type', 'text/html')
+                                        self.send_header('Location', '/list')
+                                        self.end_headers()
+
                         if self.path.endswith("/edit"):
                                 ctype, pdict = cgi.parse_header(self.headers.get('content-type'))
                                 pdict['boundary'] = bytes(pdict['boundary'], "utf-8")
@@ -199,7 +235,6 @@ class webServerHandler(BaseHTTPRequestHandler):
                                                 self.send_header('Location', '/list')
                                                 self.end_headers()
                         
-                        print("post entered")
                         if self.path.endswith("/list/new"):
                                 print("if enteres")
                                 ctype, pdict = cgi.parse_header(
