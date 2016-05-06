@@ -13,12 +13,12 @@ session = DBSession()
 app = Flask(__name__)
 
 @app.route("/")
-@app.route("/hello")
-def helloWorld():
+@app.route("/hello/<int:locId>/")
+def helloWorld(locId):
 	catalog = session.query(Catalog).first()
 	num = catalog.location_id
 	print(num)
-	wine_list = session.query(Wine).filter_by(loc_id = 8)
+	wine_list = session.query(Wine).filter_by(loc_id = locId)
 
 	output = ""
 
