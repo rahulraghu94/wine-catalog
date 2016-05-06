@@ -2,11 +2,11 @@ from flask import Flask
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Wine, Base, WineDetails
+from database_setup import Catalog, Base, Wine
 
 engine = create_engine('sqlite:///wineCatalog.db')
 Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)       
+DBSession = sessionmaker(bind=engine)      
 session = DBSession()
 
 
@@ -15,17 +15,21 @@ app = Flask(__name__)
 @app.route("/")
 @app.route("/hello")
 def helloWorld():
-	wine = session.query(Wine).first()
-	details = session.query(WineDetails).filter_by(wine_id = wine.id)
+	catalog = session.query(Catalog).first()
+	num = catalog.location_id
+	print(num)
+	wine_list = session.query(Wine).filter_by(loc_id = 8)
 
 	output = ""
 
-	for det in details:
-		output += det.name
+	for wine in wine_list:
+		output += wine.wine_maker
 		output += "<br>"
-		output += str(det.vintage)
+		output += wine.wine_varietal
 		output += "<br>"
-		output += str(det.price)
+		output += str(wine.wine_vintage)
+		output += "<br>"
+		output += str(wine.wine_price)
 		output += "<br>"
 		output += "<hr>"
 
