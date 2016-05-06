@@ -13,22 +13,20 @@ from sqlalchemy import create_engine
 # to correspond to databases across the project
 Base = declarative_base()
 
+class Catalog(Base):
+    __tablename__ = 'catalog'
+    location_id = Column(Integer, primary_key = True)
+    location_name = Column(String(250), nullable = False)
+
 class Wine(Base):
     __tablename__ = 'wine'
-    id = Column(Integer, primary_key = True)
-    name = Column(String(250), nullable = False)
-
-class WineDetails(Base):
-    __tablename__ = 'wine_details'
-    name = Column(String(250), nullable = False)
-    vintage = Column(Integer, nullable = False)
-    terroir = Column(String(250))
-    price = Column(Integer, nullable = False)
-    notes = Column(String(1024))
-    pair = Column(String(1024))
-    id = Column(Integer, primary_key = True)
-    wine_id = Column(Integer, ForeignKey('wine.id'))
-    wine = relationship(Wine)
+    wine_maker = Column(String(250), nullable = False)
+    wine_vintage = Column(Integer, nullable = False)
+    wine_varietal = Column(String(250), nullable = False)
+    wine_price = Column(Integer, nullable = False)
+    wine_id = Column(Integer, primary_key = True)
+    loc_id = Column(Integer, ForeignKey('catalog.location_id'))
+    wine = relationship(Catalog)
 
 # To go at end of file
 # Create a new engine and point to the data base that we will use
