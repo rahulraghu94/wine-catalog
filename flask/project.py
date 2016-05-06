@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -12,28 +12,25 @@ session = DBSession()
 
 app = Flask(__name__)
 
-@app.route("/")
-@app.route("/hello/<int:locId>/")
-def helloWorld(locId):
-	catalog = session.query(Catalog).first()
+@app.route("/list/<int:locId>/")
+def list(locId):
+	catalog = session.query(Catalog).filter_by(location_id=locId).one()
 	num = catalog.location_id
-	print(num)
 	wine_list = session.query(Wine).filter_by(loc_id = locId)
+	print(catalog.location_name)
+	return render_template('menu.html', cat=catalog, wine=wine_list)
 
-	output = ""
+@app.route("/list/<int:locId>/new/")
+def new_location(locId):
+	return "Create a new location!"
 
-	for wine in wine_list:
-		output += wine.wine_maker
-		output += "<br>"
-		output += wine.wine_varietal
-		output += "<br>"
-		output += str(wine.wine_vintage)
-		output += "<br>"
-		output += str(wine.wine_price)
-		output += "<br>"
-		output += "<hr>"
+@app.route("/list/<int:locId>/<int:wineId>/edit/")
+def edit_wine(locId, wineId):
+	return "Editing a wine"
 
-	return output
+@app.route("/list/<int:locId>/<int:wineId>/delete/")
+def delete_wine(locId, wineId):
+	return "Deleting a wine"
 
 if __name__ == '__main__':
 	app.debug = True

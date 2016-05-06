@@ -1,0 +1,14 @@
+<html>
+	<body>
+		<h1> {{cat.location_name}} </h1>
+
+		{% for w in wine %}
+		<br>
+		<h5> Maker: {{w.wine_maker}} </h5>
+		<h5> Varietal: {{w.wine_varietal}} </h5>
+		<h5> Vintage: {{w.wine_vintage}} </h5>
+		<h5> Price: {{w.wine_price}} </h5>
+		<hr>
+		{% endfor %}
+	</body>
+</html>
