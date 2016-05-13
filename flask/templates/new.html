@@ -1,0 +1,24 @@
+<html>
+	<body>
+		<h1> New Wine: </h1>
+
+		<form action = "{{url_for('new_wine', locId = location_id)}}" method = post>
+			<p> Maker: </p>
+			<input type = 'text' size = '30' name = 'maker'>
+
+			<p> Varital: </p>
+			<input type = 'text' size = '30' name = 'varietal'>
+			
+			<p> Vintage: </p>
+			<input type = 'text' size = '30' name = 'vintage'>
+			
+			<p> Price: </p>
+			<input type = 'text' size = '30' name = 'price'>
+			
+			<input type = submit value = 'Create'>
+
+			
+		</form>
+
+	</body>
+</html>
