@@ -72,14 +72,44 @@ def new_wine(locId):
 
 @app.route("/list/<int:locId>/<int:wineId>/edit/", methods=['GET', 'POST'])
 def edit_wine(locId, wineId):
-	return "Editing a wine"
+	location = session.query(Catalog).filter_by(location_id=locId).one()
+	wine = session.query(Wine).filter_by(wine_id = wineId).one()
+
+	if request.method == 'POST':
+		if request.form['maker']:
+			wine.wine_maker = request.form['maker']
+		if request.form['varietal']:
+			print("varieta changed")
+			wine.wine_varietal = request.form['varietal']
+		if request.form['vintage']:
+			print("vintage changed")
+			wine.wine_vintage = request.form['vintage']
+		if request.form['price']:
+			print("price changed")
+			wine.wine_price = request.form['price']
+
+		session.add(wine)
+		session.commit()
+
+		return redirect(url_for('list', locId = locId))
+
+	else:
+		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
 
 ################################################################################
 #Deleting
 ################################################################################
-@app.route("/list/<int:locId>/<int:wineId>/delete/")
+@app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
 def delete_wine(locId, wineId):
-	return "Deleting a wine"
+	location = session.query(Catalog).filter_by(location_id=locId).one()
+	wine = session.query(Wine).filter_by(wine_id = wineId).one()
+
+	if request.method == 'POST':
+		session.delete(wine)
+		session.commit
+		return redirect(url_for('list', locId = locId))
+	else:	
+		return render_template('delete.html', location_id = locId, wine_id = wineId, wine = wine)
 
 if __name__ == '__main__':
 	app.debug = True
