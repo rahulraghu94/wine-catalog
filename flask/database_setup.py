@@ -28,6 +28,15 @@ class Wine(Base):
     loc_id = Column(Integer, ForeignKey('catalog.location_id'))
     wine = relationship(Catalog)
 
+    @property
+    def serialize(self):
+        return {
+            'make' : self.wine_maker,
+            'varietal' : self.wine_varietal,
+            'vintage' : self.wine_vintage,
+            'price' : self.wine_price,
+        }
+
 # To go at end of file
 # Create a new engine and point to the data base that we will use
 engine = create_engine('sqlite:///wineCatalog.db')

@@ -1,0 +1,20 @@
+<html>
+	<head>
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+	</head>
+
+	<body>
+		<h1> Wine Catalog 
+		<br>
+		<a href = "{{url_for('new_location')}}" class="button"> Create a new location </a>
+		<br>
+		</h1>
+
+		{% for c in cat %}
+			<a href = "{{url_for('list', locId = c.location_id)}}"> {{ c.location_name}} </a>
+			<br>
+
+		{% endfor %}
+
+	</body>
+</html>

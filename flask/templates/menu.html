@@ -1,18 +1,39 @@
 <html>
-	<body>
-		<h1> {{cat.location_name}} </h1>
+<style>
 
-		<a href = "{{url_for('new_wine', locId = cat.location_id)}}"> Create a new wine </a>
+</style>
+	<head>
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+	</head>
+
+	<body>
+		<h1> {{cat.location_name}} 
+		<br>
+		<a href = "{{url_for('new_wine', locId = cat.location_id)}}" class="button"> Add a new wine </a>
+		<br>
+		</h1>
+
+		{% with messages = get_flashed_messages() %}
+		{% if messages %}
+
+		<ul>
+			{% for message in messages %}
+  			<li><strong>{{message}}</strong></li>
+  			{% endfor %}
+		</ul>
+		{% endif %}
+		{% endwith %}
 
 		{% for w in wine %}
 		<br>
-		<h5> Maker: {{w.wine_maker}} </h5>
+		<h3> Maker: {{w.wine_maker}} </h3>
 		<h5> Varietal: {{w.wine_varietal}} </h5>
 		<h5> Vintage: {{w.wine_vintage}} </h5>
 		<h5> Price: {{w.wine_price}} </h5>
-		<a href="{{url_for('edit_wine', locId = cat.location_id, wineId = w.wine_id)}}"> Edit </a>
+
+		<a href = "{{url_for('edit_wine', locId = cat.location_id, wineId = w.wine_id)}}" class="button"> EDIT </a>
+		<a href = "{{url_for('delete_wine', locId = cat.location_id, wineId = w.wine_id)}}" class="button"> DELETE </a>
 		<br>
-		<a href="{{url_for('delete_wine', locId = cat.location_id, wineId = w.wine_id)}}"> Delete </a>
 		<hr>
 		{% endfor %}
 	</body>
