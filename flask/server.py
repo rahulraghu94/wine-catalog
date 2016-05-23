@@ -22,6 +22,12 @@ def wineCatalogJson(locId):
 
 	return jsonify(wine=[i.serialize for i in wine])
 
+################################################################################
+# About
+################################################################################
+@app.route("/about")
+def about():
+	return render_template('about.html')
 
 ################################################################################
 # Main Page
@@ -30,6 +36,14 @@ def wineCatalogJson(locId):
 def main_page():
 	catalog = session.query(Catalog)
 	print("hello Wo rd")
+	return render_template('index.html')
+
+################################################################################
+# List out locations
+################################################################################
+@app.route("/explore")
+def explore():
+	catalog = session.query(Catalog)
 	return render_template('main.html', cat = catalog)
 
 ################################################################################
@@ -51,7 +65,7 @@ def new_location():
 		session.add(new)
 		session.commit()
 
-		return redirect(url_for('main_page'))
+		return redirect(url_for('explore'))
 	else:
 		return render_template('new_location.html')
 ################################################################################
@@ -104,6 +118,7 @@ def new_wine(locId):
 		return redirect(url_for('list', locId = locId))
 
 	else:
+		print("Rendering entered")
 		return render_template('new.html', location_id = locId)
 
 ################################################################################

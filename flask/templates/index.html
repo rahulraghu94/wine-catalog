@@ -26,28 +26,56 @@
   <div class="section no-pad-bot" id="index-banner">
     <div class="container">
       <br><br>
-      <h1 class="header center orange-text">Explore</h1>
-     
+      <h1 class="header center orange-text">Wine Catalog</h1>
       <div class="row center">
-      	{% for c in cat %}
-      		{% if c.location_id % 2 == 1 %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float:right"> {{ c.location_name}} </a> <br>
-        	{% else %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float: left"> {{ c.location_name}} </a> <br>
-        	{% endif %}
-        	<br>
-        {% endfor %}
+        <h5 class="header col s12 light">A Simple Catalog To Store All Your Favourite Wines</h5>
+      </div>
+      <div class="row center">
+        <a href="{{url_for('explore')}}" id="download-button" class="btn-large waves-effect waves-light orange">Explore</a>
       </div>
       <br><br>
 
-      <table style="width:100%, text-align : center">
-      	<tr>
-      		<td><a href="{{url_for('main_page')}}" id="download-button" class="btn-large waves-effect waves-light orange"> BACK </a>
-      		<div>
-      		<td align="center"> <a class="btn-floating btn-large waves-effect waves-light red" style="float:right" href = "{{url_for('new_location')}}" class="button"><i class="material-icons">add</i></a> </td>
-      		</div>
-      	</tr>
-      </table>
+    </div>
+  </div>
+
+
+  <div class="container">
+    <div class="section">
+
+      <!--   Icon Section   -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">flash_on</i></h2>
+            <h5 class="center">Store Wines By Location</h5>
+
+            <p class="light">WThe essence of terroir is something we take very seriously. The concept of archiving your favourite wines as per location comes naturally given the appellation system. Effeciently store and organise your wines by country.</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">group</i></h2>
+            <h5 class="center">See What Your Friends Are Having</h5>
+
+            <p class="light">Discover newer wines through your friends. Experience their pallette and learn about what's hot in the other wines regions of the world!</p>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="center light-blue-text"><i class="material-icons">settings</i></h2>
+            <h5 class="center">Write and Share Reviews</h5>
+
+            <p class="light">Write your profssional review about your favourite wine. Store them to experience them later. Share them to encourage others to try your favourite. Experience what others are experiemcing.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <br><br>
+
+    <div class="section">
 
     </div>
   </div>
@@ -70,6 +98,11 @@
             <li><a class="white-text" href="https://github.com/rahulraghu94">Github</a></li>
           </ul>
         </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      <div class="container">
+      Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
       </div>
     </div>
   </footer>

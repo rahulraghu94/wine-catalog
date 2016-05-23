@@ -1,10 +1,36 @@
-<html>
-	<head>
-		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
-	</head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+  <title>Wine Catalog</title>
 
-	<body>
-		<form action= "{{url_for('edit_wine', locId = location_id, wineId = wine_id)}}" method = 'POST'>
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="{{ url_for('static', filename='materialize.css') }}" type="text/css" rel="stylesheet" media="screen,projection"/>
+  <link href="{{ url_for('static', filename='style.css') }}" type="text/css" rel="stylesheet" media="screen,projection"/>
+</head>
+<body>
+  <nav class="light-blue lighten-1" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Logo</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="{{url_for('about')}}">About</a></li>
+      </ul>
+
+      <ul id="nav-mobile" class="side-nav">
+        <li><a href="#">Navbar Link</a></li>
+      </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+  </nav>
+  <div class="section no-pad-bot" id="index-banner">
+    <div class="container">
+      <br><br>
+      <h1 class="header center orange-text"> Edit {{wine.wine_name}} ?</h1>
+     
+      <div class="row center">
+      	
+      	<form action= "{{url_for('edit_wine', locId = location_id, wineId = wine_id)}}" method = 'POST'>
 
 		<p>Edit Wine:</p>
 		<p> Maker:    
@@ -25,6 +51,40 @@
 
 		<input type='submit' value='Edit'>
 		</form>
-		<a href= '{{url_for('list', locId = location_id)}}'>Cancel</a>
-	</body>
+      </div>
+      <br><br>
+
+      <a href="{{url_for('list', locId = location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange"> BACK </a>
+    </div>
+  </div>
+
+  <footer class="page-footer orange">
+    <div class="container">
+      <div class="row">
+        <div class="col l6 s12">
+          <h5 class="white-text">My Bio</h5>
+          <p class="grey-text text-lighten-4"> A onely traveller, who, will chase the last drops of bottled sunlight till, either my liver, or my wallet gives up.</p>
+
+
+        </div>
+        <div class="col l3 s12">
+          <h5 class="white-text">Connect</h5>
+          <ul>
+            <li><a class="white-text" href="https://www.facebook.com/rahulraghu1994">Facebook</a></li>
+            <li><a class="white-text" href="#!">Linkdin</a></li>
+            <li><a class="white-text" href="https://plus.google.com/u/0/105566728004606068745">Google+</a></li>
+            <li><a class="white-text" href="https://github.com/rahulraghu94">Github</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!--  Scripts-->
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="{{ url_for('static', filename='materialize.js') }}"></script>
+  <script src="{{ url_for('static', filename='init.js') }}"></script>
+
+  </body>
 </html>

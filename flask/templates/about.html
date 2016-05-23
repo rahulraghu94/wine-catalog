@@ -26,29 +26,14 @@
   <div class="section no-pad-bot" id="index-banner">
     <div class="container">
       <br><br>
-      <h1 class="header center orange-text">Explore</h1>
+      <h1 class="header center orange-text"> About</h1>
      
-      <div class="row center">
-      	{% for c in cat %}
-      		{% if c.location_id % 2 == 1 %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float:right"> {{ c.location_name}} </a> <br>
-        	{% else %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float: left"> {{ c.location_name}} </a> <br>
-        	{% endif %}
-        	<br>
-        {% endfor %}
-      </div>
+  		<h5 class="header col s12 light"> I'm a pre-graduate computer science student who loves a good coding session and a good wine tasting. I've had experiences with many tech platforms and projects as well as wines from many regions. </h5>
+      <h5 class="header col s12 light"> The concept of having two fields of expertise, one to challenge the mind and another to enlighten the soul is what, I believe, helps maintain a peaceful, well balanced life.</h5>
+      <h5 class="header col s12 light"> This is mearly an attempt to share my love of wine using the wonder of software.
       <br><br>
 
-      <table style="width:100%, text-align : center">
-      	<tr>
-      		<td><a href="{{url_for('main_page')}}" id="download-button" class="btn-large waves-effect waves-light orange"> BACK </a>
-      		<div>
-      		<td align="center"> <a class="btn-floating btn-large waves-effect waves-light red" style="float:right" href = "{{url_for('new_location')}}" class="button"><i class="material-icons">add</i></a> </td>
-      		</div>
-      	</tr>
-      </table>
-
+      <a href="{{url_for('main_page')}}" id="download-button" class="btn-large waves-effect waves-light orange"> BACK </a>
     </div>
   </div>
 
