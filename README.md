@@ -15,8 +15,8 @@ their own wine catalogs, and link simplar wines.
 
 Screenshots:
 
-![Home Page](https://github.com/rahulraghu94/wine-catalog/blob/master/flask/Screenshots/2016-05-23-202007_1366x768_scrot.png "The Home Page")
-![Explore Page](https://github.com/rahulraghu94/wine-catalog/blob/master/flask/Screenshots/2016-05-23-202033_1366x768_scrot.png "Listing of all the Countries")
-![Wine Listing](https://github.com/rahulraghu94/wine-catalog/blob/master/flask/Screenshots/2016-05-23-202051_1366x768_scrot.png "Listings of your wines in that location")
-![Create](https://github.com/rahulraghu94/wine-catalog/blob/master/flask/Screenshots/2016-05-23-202119_1366x768_scrot.png "Adding a new wine")
-![Edit](https://github.com/rahulraghu94/wine-catalog/blob/master/flask/Screenshots/2016-05-23-202202_1366x768_scrot.png "Editing a wine")
+![Home Page](https://github.com/rahulraghu94/wine-catalog/blob/master/Screenshots/2016-05-23-202007_1366x768_scrot.png "The Home Page")
+![Explore Page](https://github.com/rahulraghu94/wine-catalog/blob/master/Screenshots/2016-05-23-202033_1366x768_scrot.png "Listing of all the Countries")
+![Wine Listing](https://github.com/rahulraghu94/wine-catalog/blob/master/Screenshots/2016-05-23-202051_1366x768_scrot.png "Listings of your wines in that location")
+![Create](https://github.com/rahulraghu94/wine-catalog/blob/master/Screenshots/2016-05-23-202119_1366x768_scrot.png "Adding a new wine")
+![Edit](https://github.com/rahulraghu94/wine-catalog/blob/master/Screenshots/2016-05-23-202202_1366x768_scrot.png "Editing a wine")
