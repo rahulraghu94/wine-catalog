@@ -57,19 +57,21 @@ def new_user():
 		if usr is None or pwd is None:
 			abort(400)
 
-		if session.query(User).filter_by(user_name = usr).first() is not None:
+		if this_session.query(User).filter_by(user_name = usr).first() is not None:
 			abort(400)
 
 		user = User(id = count, user_name = usr)
 		user.hash(pwd)
-		session.add(user)
-		session.commit()
+		this_session.add(user)
+		this_session.commit()
 		print("New user made")
 
 		return redirect(url_for('explore'))
 	
 	else:
 		return render_template('new_user.html')	
+
+	this_session.remove()
 
 @app.route('/token')
 @auth.login_required
@@ -89,8 +91,8 @@ def wineCatalogJson(locId):
 
 	this_session = session()
 
-	catalog = session.query(Catalog).filter_by(location_id = locId).one()
-	wine = session.query(Wine).filter_by(loc_id = locId).all()
+	catalog = this_session.query(Catalog).filter_by(location_id = locId).one()
+	wine = this_session.query(Wine).filter_by(loc_id = locId).all()
 
 	return jsonify(wine=[i.serialize for i in wine])
 
