@@ -93,8 +93,9 @@ def wineCatalogJson(locId):
 
 	catalog = this_session.query(Catalog).filter_by(location_id = locId).one()
 	wine = this_session.query(Wine).filter_by(loc_id = locId).all()
-
+	this_session.remove()
 	return jsonify(wine=[i.serialize for i in wine])
+
 
 ###############################################################################
 # About
@@ -113,8 +114,8 @@ def main_page():
 
 	catalog = this_session.query(Catalog)
 	print("hello Word")
-	return render_template('index.html')
 	this_session.remove()
+	return render_template('index.html')
 
 ###############################################################################
 # List out locations
@@ -130,7 +131,9 @@ def explore():
 @app.route("/explore/api/get")
 @auth.login_required
 def locationJson():
-	cat = session.query(Catalog).all()
+	this_session = session()
+	cat = this_session.query(Catalog).all()
+	this_session.remove()
 	return jsonify(loc = [i.ser for i in cat])
 
 ###############################################################################
@@ -139,7 +142,8 @@ def locationJson():
 @app.route("/new/", methods=['GET', 'POST'])
 @auth.login_required
 def new_location():
-	cat = session.query(Catalog)
+	this_session = session()
+	cat = this_session.query(Catalog)
 	global count
 	count = 1
 	for c in cat:
@@ -150,22 +154,24 @@ def new_location():
 
 	if request.method == 'POST':
 		new = Catalog(location_id = count, location_name = request.form['name'])
-		session.add(new)
-		session.commit()
-
+		this_session.add(new)
+		this_session.commit()
+		this_session.remove()
 		return redirect(url_for('explore'))
 	else:
+		this_session.remove()
 		return render_template('new_location.html')
 ###############################################################################
 # Locations page
 ###############################################################################
 @app.route("/list/<int:locId>/")
 def list(locId):
-	catalog = session.query(Catalog).filter_by(location_id=locId).one()
+	this_session = session()
+	catalog = this_session.query(Catalog).filter_by(location_id=locId).one()
 	num = catalog.location_id
-	wine_list = session.query(Wine).filter_by(loc_id = locId)
+	wine_list = this_session.query(Wine).filter_by(loc_id = locId)
 
-	wine = session.query(Wine)
+	wine = this_session.query(Wine)
 	count = 1
 
 	for w in wine:
@@ -174,6 +180,7 @@ def list(locId):
 		else:
 			break
 
+	this_session.remove()
 	return render_template('menu.html', cat=catalog, wine=wine_list)
 
 ###############################################################################
@@ -183,10 +190,10 @@ def list(locId):
 @app.route("/list/<int:locId>/new/", methods=['GET', 'POST'])
 @auth.login_required
 def new_wine(locId):
-
+	this_session = session()
 	global oount 
 	count = 1
-	wine = session.query(Wine)
+	wine = this_session.query(Wine)
 	for w in wine:
 		if count == w.wine_id:
 			count += 1
@@ -195,19 +202,21 @@ def new_wine(locId):
 
 	print(count)
 
-	location = session.query(Catalog).filter_by(location_id=locId).one()
+	location = this_session.query(Catalog).filter_by(location_id=locId).one()
 
 	if request.method == 'POST':
 		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'], 
 			wine_varietal = request.form['varietal'], 
 	         wine_price = request.form['price'], wine_id = count, loc_id = locId, wine = location)
-		session.add(new)
-		session.commit()
+		this_session.add(new)
+		this_session.commit()
 		flash("New wine added!")
+		this_session.remove()
 		return redirect(url_for('list', locId = locId))
 
 	else:
 		print("Rendering entered")
+		this_session.remove()
 		return render_template('new.html', location_id = locId)
 
 ###############################################################################
@@ -217,8 +226,9 @@ def new_wine(locId):
 @app.route("/list/<int:locId>/<int:wineId>/edit/", methods=['GET', 'POST'])
 @auth.login_required
 def edit_wine(locId, wineId):
-	location = session.query(Catalog).filter_by(location_id=locId).one()
-	wine = session.query(Wine).filter_by(wine_id = wineId).one()
+	this_session = session()
+	location = this_session.query(Catalog).filter_by(location_id=locId).one()
+	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
 
 	if request.method == 'POST':
 		if request.form['maker']:
@@ -230,13 +240,14 @@ def edit_wine(locId, wineId):
 		if request.form['price']:
 			wine.wine_price = request.form['price']
 
-		session.add(wine)
-		session.commit()
+		this_session.add(wine)
+		this_session.commit()
 		flash("Wine has been Edited!")
-
+		this_session.remove()
 		return redirect(url_for('list', locId = locId))
 
 	else:
+		this_session.remove()
 		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
 
 ###############################################################################
@@ -245,18 +256,21 @@ def edit_wine(locId, wineId):
 @app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
 @auth.login_required
 def delete_wine(locId, wineId):
-	location = session.query(Catalog).filter_by(location_id=locId).one()
-	wine = session.query(Wine).filter_by(wine_id = wineId).one()
+	this_session = session()
+	location = this_session.query(Catalog).filter_by(location_id=locId).one()
+	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
 
 	if not wine:
 		return "Wine already deleted"
 		
 	if request.method == 'POST':
-		session.delete(wine)
-		session.commit
+		this_session.delete(wine)
+		this_session.commit
 		flash("wine had been deleted!")
+		this_session.remove()
 		return redirect(url_for('list', locId = locId))
 	else:	
+		this_session.remove()
 		return render_template('delete.html', location_id = locId, wine_id = wineId, wine = wine)
 
 if __name__ == '__main__':
