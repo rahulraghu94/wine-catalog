@@ -33,7 +33,7 @@ def verify_password(usr, pwd):
 	
 	g.user = user
 
-	this_session.remove()
+	session.remove()
 	return True
 
 @app.route("/users", methods = ['POST', 'GET'])
@@ -71,7 +71,7 @@ def new_user():
 	else:
 		return render_template('new_user.html')	
 
-	this_session.remove()
+	session.remove()
 
 @app.route('/token')
 @auth.login_required
@@ -93,7 +93,7 @@ def wineCatalogJson(locId):
 
 	catalog = this_session.query(Catalog).filter_by(location_id = locId).one()
 	wine = this_session.query(Wine).filter_by(loc_id = locId).all()
-	this_session.remove()
+	session.remove()
 	return jsonify(wine=[i.serialize for i in wine])
 
 
@@ -114,7 +114,7 @@ def main_page():
 
 	catalog = this_session.query(Catalog)
 	print("hello Word")
-	this_session.remove()
+	session.remove()
 	return render_template('index.html')
 
 ###############################################################################
@@ -126,14 +126,14 @@ def explore():
 	this_session = session()
 	catalog = this_session.query(Catalog)
 	return render_template('main.html', cat = catalog)
-	this_session.remove()
+	session.remove()
 
 @app.route("/explore/api/get")
 @auth.login_required
 def locationJson():
 	this_session = session()
 	cat = this_session.query(Catalog).all()
-	this_session.remove()
+	session.remove()
 	return jsonify(loc = [i.ser for i in cat])
 
 ###############################################################################
@@ -156,10 +156,10 @@ def new_location():
 		new = Catalog(location_id = count, location_name = request.form['name'])
 		this_session.add(new)
 		this_session.commit()
-		this_session.remove()
+		session.remove()
 		return redirect(url_for('explore'))
 	else:
-		this_session.remove()
+		session.remove()
 		return render_template('new_location.html')
 ###############################################################################
 # Locations page
@@ -180,7 +180,7 @@ def list(locId):
 		else:
 			break
 
-	this_session.remove()
+	session.remove()
 	return render_template('menu.html', cat=catalog, wine=wine_list)
 
 ###############################################################################
@@ -211,12 +211,12 @@ def new_wine(locId):
 		this_session.add(new)
 		this_session.commit()
 		flash("New wine added!")
-		this_session.remove()
+		session.remove()
 		return redirect(url_for('list', locId = locId))
 
 	else:
 		print("Rendering entered")
-		this_session.remove()
+		session.remove()
 		return render_template('new.html', location_id = locId)
 
 ###############################################################################
@@ -243,11 +243,11 @@ def edit_wine(locId, wineId):
 		this_session.add(wine)
 		this_session.commit()
 		flash("Wine has been Edited!")
-		this_session.remove()
+		session.remove()
 		return redirect(url_for('list', locId = locId))
 
 	else:
-		this_session.remove()
+		session.remove()
 		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
 
 ###############################################################################
@@ -267,10 +267,10 @@ def delete_wine(locId, wineId):
 		this_session.delete(wine)
 		this_session.commit
 		flash("wine had been deleted!")
-		this_session.remove()
+		session.remove()
 		return redirect(url_for('list', locId = locId))
 	else:	
-		this_session.remove()
+		session.remove()
 		return render_template('delete.html', location_id = locId, wine_id = wineId, wine = wine)
 
 if __name__ == '__main__':
