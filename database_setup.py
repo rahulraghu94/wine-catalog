@@ -50,39 +50,6 @@ class Wine(Base):
             'price' : self.wine_price,
         }
 
-
-# Stores each user along with their password hashes
-class User(Base):
-    __tablename__ = 'user'
-    id = Column(Integer, primary_key = True)
-    user_name = Column(String(20), index = True)
-    pswd_hash = Column(String(500))
-
-    def hash(self, pwd):
-        self.password_hash = pwd_context.encrypt(pwd)
-
-    def verify(self, pwd):
-        self.password_hash = pwd_context.encrypt(pwd)
-        return pwd_context.verify(pwd, self.password_hash)
-
-    def generate_auth_token(self, expiration = 600):
-        s = Serializer(secret_key, expires_in = expiration)
-        return s.dumps({'id':self.id})
-
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(secret_key)
-
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None
-        except BadSignature:
-            return None
-
-        user_id = data['id']
-        return user_id
-
 # To go at end of file
 # Create a new engine and point to the data base that we will use
 engine = create_engine('sqlite:///wineCatalog.db')

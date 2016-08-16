@@ -11,82 +11,11 @@ DBSession = sessionmaker(bind=engine)
 session = scoped_session(DBSession)
 
 app = Flask(__name__)
-auth = HTTPBasicAuth()
-
-###############################################################################
-# New User
-###############################################################################
-@auth.verify_password
-def verify_password(usr, pwd):
-
-	user_id = User.verify_auth_token(usr)
-
-	this_session = session()
-	
-	if user_id:
-		user = this_session.query(User).filter_by(user_name = usr).first()
-	else:
-		user = this_session.query(User).filter_by(user_name = usr).first()
-	
-	if not user or not user.verify(pwd):
-		return False
-	
-	g.user = user
-
-	session.remove()
-	return True
-
-@app.route("/users", methods = ['POST', 'GET'])
-def new_user():
-
-	this_session = session()
-
-	users = this_session.query(User)
-	global count
-	count = 1
-	for c in users:
-		if count == c.id:
-			count += 1
-		else:
-			break
-
-	if request.method == 'POST':
-		usr = request.form['username']
-		pwd = request.form['password']
-
-		if usr is None or pwd is None:
-			abort(400)
-
-		if this_session.query(User).filter_by(user_name = usr).first() is not None:
-			abort(400)
-
-		user = User(id = count, user_name = usr)
-		user.hash(pwd)
-		this_session.add(user)
-		this_session.commit()
-		print("New user made")
-
-		return redirect(url_for('explore'))
-	
-	else:
-		return render_template('new_user.html')	
-
-	session.remove()
-
-@app.route('/token')
-@auth.login_required
-def get_auth_token():
-	token = g.user.generate_auth_token()
-	return jsonify({'token':token.decode('ascii')})
-
-
-@app.route("/logged")
 
 ###############################################################################
 # JSON Route
 ###############################################################################
 @app.route("/list/<int:locId>/api/get")
-@auth.login_required
 def wineCatalogJson(locId):
 
 	this_session = session()
@@ -129,7 +58,6 @@ def explore():
 	session.remove()
 
 @app.route("/explore/api/get")
-@auth.login_required
 def locationJson():
 	this_session = session()
 	cat = this_session.query(Catalog).all()
@@ -140,7 +68,6 @@ def locationJson():
 # Add new Location
 ###############################################################################
 @app.route("/new/", methods=['GET', 'POST'])
-@auth.login_required
 def new_location():
 	this_session = session()
 	cat = this_session.query(Catalog)
@@ -188,7 +115,6 @@ def list(locId):
 ###############################################################################
 
 @app.route("/list/<int:locId>/new/", methods=['GET', 'POST'])
-@auth.login_required
 def new_wine(locId):
 	this_session = session()
 	global oount 
@@ -224,7 +150,6 @@ def new_wine(locId):
 ###############################################################################
 
 @app.route("/list/<int:locId>/<int:wineId>/edit/", methods=['GET', 'POST'])
-@auth.login_required
 def edit_wine(locId, wineId):
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
@@ -254,7 +179,6 @@ def edit_wine(locId, wineId):
 #Deleting
 ###############################################################################
 @app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
-@auth.login_required
 def delete_wine(locId, wineId):
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
