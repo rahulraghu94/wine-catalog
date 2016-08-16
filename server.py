@@ -3,7 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from database_setup import Catalog, Base, Wine, User
+from database_setup import Catalog, Base, Wine
 
 engine = create_engine('sqlite:///wineCatalog.db')
 Base.metadata.bind = engine
