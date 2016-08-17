@@ -98,7 +98,7 @@ def gconnect():
 	#print(login_session['picture'])
 
 	output = ''
-	output += '<h1> Welcooome'
+	output += '<h1> Welcooome, CUNT'
 	output += login_session['username']
 	output += '!</h1>'
 
@@ -107,8 +107,38 @@ def gconnect():
 	output += ' "style = "width:300px; height:300px;">'
 
 	print(output)
-
+	flash("You are now logged in, you illiterate fuck");
 	return render_template('after_login.html', NAME=login_session['username'], PIC=login_session['picture'])
+
+@app.route("/gdisconnect")
+def gdisconnect():
+	credentials = login_session['credentials']
+	print("Credentials are:", credentials)
+	if credentials is None:
+		response = make_response(json.dumps('The currant user is not logged in'), 401)
+		response.headers['Content-tyoe'] = 'application/json'
+		return response
+
+	access_token = credentials
+	url = "https://accounts.google.com/o/oauth2/revoke?token="
+	url += access_token
+
+	h = httplib2.Http()
+	result = h.request(url, 'GET')[0]
+
+	if result['status'] == '200':
+		del login_session['username']
+		del login_session['picture']
+		del login_session['email']
+
+		response = make_response(json.dumps('Successfully disconnected!'), 200)
+		response.headers['Content-tyoe'] = 'application/json'
+		return response
+
+	else:
+		response = make_response(json.dumps("Something went wrong... Try again"), 400)
+		response.headers['Content-tyoe'] = 'application/json'
+		return response
 
 @app.route("/login")
 def login():
@@ -156,7 +186,6 @@ def main_page():
 ###############################################################################
 @app.route("/explore")
 def explore():
-
 	this_session = session()
 	catalog = this_session.query(Catalog)
 	return render_template('main.html', cat = catalog)
@@ -164,6 +193,8 @@ def explore():
 
 @app.route("/explore/api/get")
 def locationJson():
+	if 'username' not in login_session:
+		return redirect('/login')
 	this_session = session()
 	cat = this_session.query(Catalog).all()
 	session.remove()
@@ -174,6 +205,9 @@ def locationJson():
 ###############################################################################
 @app.route("/new/", methods=['GET', 'POST'])
 def new_location():
+	if 'username' not in login_session:
+		return redirect('/login')
+
 	this_session = session()
 	cat = this_session.query(Catalog)
 	global count
@@ -221,6 +255,8 @@ def list(locId):
 
 @app.route("/list/<int:locId>/new/", methods=['GET', 'POST'])
 def new_wine(locId):
+	if 'username' not in login_session:
+		return redirect('/login')
 	this_session = session()
 	global oount 
 	count = 1
@@ -256,6 +292,8 @@ def new_wine(locId):
 
 @app.route("/list/<int:locId>/<int:wineId>/edit/", methods=['GET', 'POST'])
 def edit_wine(locId, wineId):
+	if 'username' not in login_session:
+		return redirect('/login')
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
 	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
@@ -285,6 +323,8 @@ def edit_wine(locId, wineId):
 ###############################################################################
 @app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
 def delete_wine(locId, wineId):
+	if 'username' not in login_session:
+		return redirect('/login')
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
 	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
