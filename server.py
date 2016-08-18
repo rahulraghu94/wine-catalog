@@ -3,7 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from database_setup import Catalog, Base, Wine
+from database_setup import Catalog, Base, Wine, User
 import random, string
 from flask import session as login_session
 from oauth2client.client import flow_from_clientsecrets
@@ -25,9 +25,6 @@ CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_i
 
 @app.route('/gconnect', methods = ['POST'])
 def gconnect():
-	#print("inside gconnect...")
-	#print(request.args.get('state'))
-
 	if request.args.get('state') != login_session['state']:
 		response = make_response(json.dumps('Invalid state parameter you mofofs'), 401)
 		response.headers['Content-tyoe'] = 'application/json'
@@ -48,7 +45,7 @@ def gconnect():
 	url = 'https://www.googleapis.com/oauth2/v2/tokeninfo?access_token='
 	url = url + access_token
 	h = httplib2.Http()
-	#print(url)
+	
 	result = json.loads(h.request(url, 'GET')[1].decode('utf-8'))
 
 	if result.get('error') is not None:
@@ -56,7 +53,6 @@ def gconnect():
 		response.headers['Content-tyoe'] = 'application/json'
 
 	gplus_id = credentials.id_token['sub']
-	#print(gplus_id)
 
 	if result['user_id'] != gplus_id:
 		response = make_response(json.dumps("Token ID mismatch"), 401)
@@ -83,31 +79,20 @@ def gconnect():
 	userinfo_url = ("https://www.googleapis.com/oauth2/v2/userinfo")
 	params = {'access_token' : credentials.access_token, 'alt' : 'json'}
 
-	#print("Sending the request to...: " , userinfo_url)
-
 	answer = requests.get(userinfo_url, params=params)
 	data = json.loads(answer.text)
-
-	#print("Data is..." , data)
 
 	login_session['username'] = data["name"]
 	login_session['picture'] = data["picture"]
 	login_session['email'] = data["link"]
 
-	#print(login_session['username'])
-	#print(login_session['picture'])
+	user_id = getUserId(login_session['email'])
 
-	output = ''
-	output += '<h1> Welcooome, CUNT'
-	output += login_session['username']
-	output += '!</h1>'
+	if not user_id:
+		print("User ID not got... :(")
+		user_id = createUser(login_session)
+	login_session['user_id'] = user_id
 
-	output += '<img src = '
-	output += login_session['picture']
-	output += ' "style = "width:300px; height:300px;">'
-
-	print(output)
-	flash("You are now logged in, you illiterate fuck");
 	return render_template('after_login.html', NAME=login_session['username'], PIC=login_session['picture'])
 
 @app.route("/gdisconnect")
@@ -188,7 +173,10 @@ def main_page():
 def explore():
 	this_session = session()
 	catalog = this_session.query(Catalog)
-	return render_template('main.html', cat = catalog)
+	if 'username' not in login_session:
+		return render_template('main_public.html', cat = catalog)
+	else: 
+		return render_template('main.html', cat = catalog)
 	session.remove()
 
 @app.route("/explore/api/get")
@@ -219,7 +207,7 @@ def new_location():
 			break
 
 	if request.method == 'POST':
-		new = Catalog(location_id = count, location_name = request.form['name'])
+		new = Catalog(location_id = count, location_name = request.form['name'], user_id = login_session['user_id'])
 		this_session.add(new)
 		this_session.commit()
 		session.remove()
@@ -247,7 +235,10 @@ def list(locId):
 			break
 
 	session.remove()
-	return render_template('menu.html', cat=catalog, wine=wine_list)
+	if 'username' not in login_session:
+		return render_template('menu_public.html', cat = catalog, wine = wine_list)
+	else:
+		return render_template('menu.html', cat=catalog, wine=wine_list)
 
 ###############################################################################
 # Addig a wine
@@ -274,7 +265,7 @@ def new_wine(locId):
 	if request.method == 'POST':
 		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'], 
 			wine_varietal = request.form['varietal'], 
-	         wine_price = request.form['price'], wine_id = count, loc_id = locId, wine = location)
+	         wine_price = request.form['price'], wine_id = count, loc_id = locId, wine = location, user_id = login_session['user_id'])
 		this_session.add(new)
 		this_session.commit()
 		flash("New wine added!")
@@ -341,6 +332,37 @@ def delete_wine(locId, wineId):
 	else:	
 		session.remove()
 		return render_template('delete.html', location_id = locId, wine_id = wineId, wine = wine)
+
+###############################################################################
+# Handle New users
+###############################################################################
+def getUserId(email):
+	this_session = session()
+	try:
+		user = this_session.query(User).filter_by(email = email).one()
+		session.remove()
+		return user.id
+	except:
+		session.remove()
+		return None
+
+def getUserInfo(user_id):
+	this_session = session()
+
+	user = this_session.query(User).filter_by(id = user_id).one()
+	session.remove()
+	return user
+
+def createUser(login_session):
+	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
+	
+	this_session = session();
+	this_session.add(newUser)
+	this_session.commit()
+
+	user = this_session.query(User).filter_by(email = login_session['email']).one()
+	session.remove()
+	return user.id
 
 if __name__ == '__main__':
 	app.secret_key = "super_secret_key"
