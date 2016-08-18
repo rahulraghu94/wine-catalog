@@ -8,18 +8,29 @@ from passlib.apps import custom_app_context as pwd_context
 from sqlalchemy import create_engine
 import random, string
 from itsdangerous import(TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+from flask import session as login_session
+import random, string
 
 # Create an instance of declarative base that we will use
 # to correspond to databases across the project
 Base = declarative_base()
 secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits)for x in range(32))
 
+#Stores all the users
+class User(Base):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key = True)
+    name = Column(String(250), nullable = False)
+    email = Column(String(100), nullable = False)
+    picture = Column(String(250), nullable = False)
 
 # Stores each location along with an ID
 class Catalog(Base):
     __tablename__ = 'catalog'
     location_id = Column(Integer, primary_key = True)
     location_name = Column(String(250), nullable = False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(User)
 
     # For JSON API retrieval
     @property 
@@ -39,6 +50,8 @@ class Wine(Base):
     wine_price = Column(Integer, nullable = False)
     wine_id = Column(Integer, primary_key = True)
     loc_id = Column(Integer, ForeignKey('catalog.location_id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(User)
     wine = relationship(Catalog)
 
     @property
