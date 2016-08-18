@@ -82,6 +82,8 @@ def gconnect():
 	answer = requests.get(userinfo_url, params=params)
 	data = json.loads(answer.text)
 
+	print(data)
+
 	login_session['username'] = data["name"]
 	login_session['picture'] = data["picture"]
 	login_session['email'] = data["link"]
@@ -108,8 +110,12 @@ def gdisconnect():
 	url = "https://accounts.google.com/o/oauth2/revoke?token="
 	url += access_token
 
+	print(url)
+
 	h = httplib2.Http()
 	result = h.request(url, 'GET')[0]
+
+	print(result)
 
 	if result['status'] == '200':
 		del login_session['username']
@@ -234,11 +240,12 @@ def list(locId):
 		else:
 			break
 
+	creator = getUserInfo(catalog.user_id)
 	session.remove()
-	if 'username' not in login_session:
-		return render_template('menu_public.html', cat = catalog, wine = wine_list)
+	if 'username' not in login_session or creator.id != login_session['user_id']:
+		return render_template('menu_public.html', cat = catalog, wine = wine_list, creator = creator)
 	else:
-		return render_template('menu.html', cat=catalog, wine=wine_list)
+		return render_template('menu.html', cat=catalog, wine=wine_list, creator = creator)
 
 ###############################################################################
 # Addig a wine
