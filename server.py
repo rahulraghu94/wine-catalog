@@ -23,6 +23,23 @@ app = Flask(__name__)
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
+###############################################################################
+# Just trying new new things
+###############################################################################
+@app.route('/exp')
+def exp():
+	return render_template('map.html')
+
+
+@app.route('/expData')
+def expData():
+	country = request.args.get('country')
+	print(country)
+
+###############################################################################
+# Handel new user, connecting and disconnect to Google
+###############################################################################
+
 @app.route('/gconnect', methods = ['POST'])
 def gconnect():
 	if request.args.get('state') != login_session['state']:
@@ -136,7 +153,7 @@ def login():
 	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32))
 
 	login_session['state'] = state
-	return render_template('login.html', STATE=state)
+	return render_template('login_new.html', STATE=state)
 
 ###############################################################################
 # JSON Route
@@ -151,13 +168,12 @@ def wineCatalogJson(locId):
 	session.remove()
 	return jsonify(wine=[i.serialize for i in wine])
 
-
 ###############################################################################
 # About
 ###############################################################################
 @app.route("/about")
 def about():
-	return render_template('about.html')
+	return render_template('about_new.html')
 
 ###############################################################################
 # Main Page
@@ -170,7 +186,7 @@ def main_page():
 	catalog = this_session.query(Catalog)
 	print("hello Woord")
 	session.remove()
-	return render_template('index.html')
+	return render_template('index_new.html')
 
 ###############################################################################
 # List out locations

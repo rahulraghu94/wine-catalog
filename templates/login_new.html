@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../static/cover/wine.ico">
+
+    <title>Cover Template for Bootstrap</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../static/cover/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="../static/cover/assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../static/cover/cover.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="../static/cover/assets/js/ie-emulation-modes-warning.js"></script>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+  <script>
+    console.log("Is this really working or not?");
+  </script>
+  <div id = "result"> </div>
+
+  <script>
+    function signInCallback(authResut)
+    {
+      if(authResut['code']){
+        //hide sign in button
+
+        $('#signinButton').attr('style', 'display:none');
+        console.log("Inside signInCallback...");
+        //send auth code down to server
+        $.ajax({
+          type: 'POST',
+          url: '/gconnect?state={{STATE}}',
+          processData: false,
+          contentType: 'application/octet-stream; charset=utf-8',
+          data: authResut['code'],
+          success: function(result)
+          {
+            console.log("Inside success function....");
+            if(result){
+              console.log("YAYAYAYAYYA");
+              $('#result').html('Login Successful!</br>'+result+"</br>Redirecting...")
+              setTimeout(function()
+                {window.location.href = "/explore";}, 4000);
+            } else if(authResut['error']){
+              console.log("There was an error..." + authResut['error']);
+            } else {
+              $('#result').html('Failed to make call to server. Check console, network connection and configuration!');
+            }
+
+
+          },
+          error: function(req, err)
+          { 
+            console.log('my message: ' + req);
+          }
+        });
+      }
+    }
+
+    console.log("REALLY WORKING?");
+  </script>
+
+    <div class="site-wrapper">
+      <div class="site-wrapper-inner">
+        <div class="cover-container">
+          <div class="masthead clearfix">
+            <div class="inner">
+              <!--h3 class="masthead-brand">Rahul Raghunath</h3-->
+              <nav>
+                <ul class="nav masthead-nav">
+                  <li><a href="{{url_for('main_page')}}">Home</a></li>
+                  <li><a href="{{url_for('about')}}">About</a></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+          <div class="inner cover">
+            <h1 class="cover-heading">Login Through Google+</h1>
+            <p class="lead">
+              
+                <div id = "signinButton">
+                <span class = "g-signin"
+                  data-scope = "openid"
+                  data-clientid = "1072935208403-78obda9crpcnfdgn74dc5j7mptljgbsq.apps.googleusercontent.com"
+                  data-redirecturi = "postmessage"
+                  data-accestype = "offline"
+                  data-cookiepolicy = "single_host_origin"
+                  data-callback = "signInCallback"
+                  data-approvalprompt = "force">
+                </span>
+              </div>
+            </p>
+          </div>
+
+          <div class="mastfoot">
+            <div class="inner">
+              <p>Cover template for <a href="http://getbootstrap.com">Bootstrap</a>, by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="../static/cover/assets/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="../static/cover/dist/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../static/cover/assets/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
