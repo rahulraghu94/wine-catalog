@@ -3,7 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from database_setup import Catalog, Base, Wine, User
+from database_setup import Catalog, Base, Wine
 import random, string
 from flask import session as login_session
 from oauth2client.client import flow_from_clientsecrets
@@ -13,6 +13,7 @@ import json
 from flask import make_response 
 import requests
 from oauth2client.client import AccessTokenCredentials
+import wikipedia
 
 engine = create_engine('sqlite:///wineCatalog.db')
 Base.metadata.bind = engine
@@ -24,293 +25,112 @@ app = Flask(__name__)
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
 ###############################################################################
-# Just trying new new things
+# Main Page
 ###############################################################################
-@app.route('/exp')
-def exp():
-	return render_template('map.html')
-
-
-@app.route('/expData')
-def expData():
-	country = request.args.get('country')
-	print(country)
-
-###############################################################################
-# Handel new user, connecting and disconnect to Google
-###############################################################################
-
-@app.route('/gconnect', methods = ['POST'])
-def gconnect():
-	if request.args.get('state') != login_session['state']:
-		response = make_response(json.dumps('Invalid state parameter you mofofs'), 401)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	code = request.data
-
-	try:
-		oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
-		oauth_flow.redirect_uri = 'postmessage'
-		credentials = oauth_flow.step2_exchange(code)
-	except FlowExchangeError:
-		response = make_response(json.dumps('Auth Code Upgradation Failure'), 401)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	access_token = credentials.access_token
-	url = 'https://www.googleapis.com/oauth2/v2/tokeninfo?access_token='
-	url = url + access_token
-	h = httplib2.Http()
-	
-	result = json.loads(h.request(url, 'GET')[1].decode('utf-8'))
-
-	if result.get('error') is not None:
-		response - make_response(json.dumps(result.get('error')), 500)
-		response.headers['Content-tyoe'] = 'application/json'
-
-	gplus_id = credentials.id_token['sub']
-
-	if result['user_id'] != gplus_id:
-		response = make_response(json.dumps("Token ID mismatch"), 401)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	if result['issued_to'] != CLIENT_ID:
-		response = make_response(json.dumps('Client ID mismatch'), 401)
-		print("Check client ID")
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	stored_credentials = login_session.get('credentials')
-	stored_gplus_id = login_session.get('gplus_id')
-
-	if stored_credentials is not None and gplus_id == stored_gplus_id:
-		response = make_response(json.dumps('User is already logged in'), 200)
-		response.headers['Content-tyoe'] = 'application/json'
-
-	login_session['credentials'] = credentials.access_token
-	credentials = AccessTokenCredentials(login_session['credentials'], 'user-agent-value')
-	login_session['gplus_id'] = gplus_id
-
-	userinfo_url = ("https://www.googleapis.com/oauth2/v2/userinfo")
-	params = {'access_token' : credentials.access_token, 'alt' : 'json'}
-
-	answer = requests.get(userinfo_url, params=params)
-	data = json.loads(answer.text)
-
-	print(data)
-
-	login_session['username'] = data["name"]
-	login_session['picture'] = data["picture"]
-	login_session['email'] = data["link"]
-
-	user_id = getUserId(login_session['email'])
-
-	if not user_id:
-		print("User ID not got... :(")
-		user_id = createUser(login_session)
-	login_session['user_id'] = user_id
-
-	return render_template('after_login.html', NAME=login_session['username'], PIC=login_session['picture'])
-
-@app.route("/gdisconnect")
-def gdisconnect():
-	credentials = login_session['credentials']
-	print("Credentials are:", credentials)
-	if credentials is None:
-		response = make_response(json.dumps('The currant user is not logged in'), 401)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	access_token = credentials
-	url = "https://accounts.google.com/o/oauth2/revoke?token="
-	url += access_token
-
-	print(url)
-
-	h = httplib2.Http()
-	result = h.request(url, 'GET')[0]
-
-	print(result)
-
-	if result['status'] == '200':
-		del login_session['username']
-		del login_session['picture']
-		del login_session['email']
-
-		response = make_response(json.dumps('Successfully disconnected!'), 200)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-	else:
-		response = make_response(json.dumps("Something went wrong... Try again"), 400)
-		response.headers['Content-tyoe'] = 'application/json'
-		return response
-
-@app.route("/login")
-def login():
-	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32))
-
-	login_session['state'] = state
-	return render_template('login_new.html', STATE=state)
-
-###############################################################################
-# JSON Route
-###############################################################################
-@app.route("/list/<int:locId>/api/get")
-def wineCatalogJson(locId):
-
-	this_session = session()
-
-	catalog = this_session.query(Catalog).filter_by(location_id = locId).one()
-	wine = this_session.query(Wine).filter_by(loc_id = locId).all()
-	session.remove()
-	return jsonify(wine=[i.serialize for i in wine])
+@app.route("/")
+def main_page():
+	return render_template('intro.html')
 
 ###############################################################################
 # About
 ###############################################################################
 @app.route("/about")
 def about():
-	return render_template('about_new.html')
+	return render_template('about.html')
 
 ###############################################################################
-# Main Page
+# Display World Map that is clickable
 ###############################################################################
-@app.route("/")
-def main_page():
+@app.route('/home')
+def home():
+	return render_template('world.html')
+
+###############################################################################
+# This function recieves the name of the country as clicked on the world map.
+# We then check if this country is already listed/
+# If listed, open up the page that will ist all the wines in it, along with
+# add, delete, edit, etc.
+# If not, then add the country to the catalog database and take the user to the
+# page where we can add and delete wines
+###############################################################################
+@app.route('/location', methods = ['POST'])
+def location():
+	country = request.json['name']
+	print(country)
 
 	this_session = session()
 
-	catalog = this_session.query(Catalog)
-	print("hello Woord")
-	session.remove()
-	return render_template('index_new.html')
-
-###############################################################################
-# List out locations
-###############################################################################
-@app.route("/explore")
-def explore():
-	this_session = session()
-	catalog = this_session.query(Catalog)
-	if 'username' not in login_session:
-		return render_template('main_public.html', cat = catalog)
-	else: 
-		return render_template('main.html', cat = catalog)
-	session.remove()
-
-@app.route("/explore/api/get")
-def locationJson():
-	if 'username' not in login_session:
-		return redirect('/login')
-	this_session = session()
-	cat = this_session.query(Catalog).all()
-	session.remove()
-	return jsonify(loc = [i.ser for i in cat])
-
-###############################################################################
-# Add new Location
-###############################################################################
-@app.route("/new/", methods=['GET', 'POST'])
-def new_location():
-	if 'username' not in login_session:
-		return redirect('/login')
-
-	this_session = session()
-	cat = this_session.query(Catalog)
-	global count
-	count = 1
-	for c in cat:
-		if count == c.location_id:
-			count += 1
-		else:
-			break
-
-	if request.method == 'POST':
-		new = Catalog(location_id = count, location_name = request.form['name'], user_id = login_session['user_id'])
-		this_session.add(new)
+	if this_session.query(Catalog).filter_by(location_name = country).scalar() is None:
+		print("Country does not exits...")
+		catalog = Catalog(location_name = country)
+		this_session.add(catalog)
 		this_session.commit()
 		session.remove()
-		return redirect(url_for('explore'))
+		return "motherfucker"
 	else:
+		print("Country exists ...")
 		session.remove()
-		return render_template('new_location.html')
+		return "motherfucker"
+
+
 ###############################################################################
-# Locations page
+# The /location page consists of a clickable map. When clicked, the map will
+# will repond with a JSON message back to the server through JQuery and AJAX
+# The JSON message will be sent from the client side to /list
+# The server, on /list will extract data of the country clicked from the 
+# database and will render a page that lists all the wines of the country
+# This page can be used to add more wines, if logged in.
 ###############################################################################
-@app.route("/list/<int:locId>/")
-def list(locId):
+@app.route('/list')
+def list():
+	country = request.args.get('name')
+	query = country
+	query = query + " wine"
+	#country_data = wikipedia.summary(query)
 	this_session = session()
-	catalog = this_session.query(Catalog).filter_by(location_id=locId).one()
-	num = catalog.location_id
-	wine_list = this_session.query(Wine).filter_by(loc_id = locId)
 
-	wine = this_session.query(Wine)
-	count = 1
-
-	for w in wine:
-		if count == w.wine_id:
-			count += 1
-		else:
-			break
-
-	creator = getUserInfo(catalog.user_id)
-	session.remove()
-	if 'username' not in login_session or creator.id != login_session['user_id']:
-		return render_template('menu_public.html', cat = catalog, wine = wine_list, creator = creator)
-	else:
-		return render_template('menu.html', cat=catalog, wine=wine_list, creator = creator)
+	catalog = this_session.query(Catalog).filter_by(location_name = country).one()
+	wine = this_session.query(Wine).filter_by(loc_id = catalog.location_id).all()
+	locId = catalog.location_id
+	return render_template('list.html', cat = catalog, wine = wine, location_id = locId)
 
 ###############################################################################
 # Addig a wine
 ###############################################################################
-
 @app.route("/list/<int:locId>/new/", methods=['GET', 'POST'])
 def new_wine(locId):
-	if 'username' not in login_session:
-		return redirect('/login')
 	this_session = session()
-	global oount 
-	count = 1
-	wine = this_session.query(Wine)
-	for w in wine:
-		if count == w.wine_id:
-			count += 1
-		else:
-			break
-
-	print(count)
 
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
+
+	country = location.location_name
 
 	if request.method == 'POST':
 		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'], 
 			wine_varietal = request.form['varietal'], 
-	         wine_price = request.form['price'], wine_id = count, loc_id = locId, wine = location, user_id = login_session['user_id'])
+	         wine_price = request.form['price'], loc_id = locId, wine = location)
 		this_session.add(new)
 		this_session.commit()
 		flash("New wine added!")
 		session.remove()
-		return redirect(url_for('list', locId = locId))
+		return redirect(url_for('list', name = country))
 
 	else:
 		print("Rendering entered")
 		session.remove()
-		return render_template('new.html', location_id = locId)
+		return render_template('add.html', location_id = locId)
+
 
 ###############################################################################
-#editing
+# Edit a wine
 ###############################################################################
-
 @app.route("/list/<int:locId>/<int:wineId>/edit/", methods=['GET', 'POST'])
 def edit_wine(locId, wineId):
-	if 'username' not in login_session:
-		return redirect('/login')
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
 	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
+
+	country = location.location_name
 
 	if request.method == 'POST':
 		if request.form['maker']:
@@ -324,68 +144,44 @@ def edit_wine(locId, wineId):
 
 		this_session.add(wine)
 		this_session.commit()
-		flash("Wine has been Edited!")
 		session.remove()
-		return redirect(url_for('list', locId = locId))
+		return redirect(url_for('list', name = country))
 
 	else:
 		session.remove()
 		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
 
 ###############################################################################
-#Deleting
+# Edit a wine
 ###############################################################################
 @app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
 def delete_wine(locId, wineId):
-	if 'username' not in login_session:
-		return redirect('/login')
 	this_session = session()
 	location = this_session.query(Catalog).filter_by(location_id=locId).one()
 	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
+
+	country = location.location_name
 
 	if not wine:
 		return "Wine already deleted"
 		
 	if request.method == 'POST':
 		this_session.delete(wine)
-		this_session.commit
-		flash("wine had been deleted!")
+		this_session.commit()
+		print("wine had been deleted!")
 		session.remove()
-		return redirect(url_for('list', locId = locId))
+		return redirect(url_for('list', name = country))
 	else:	
 		session.remove()
-		return render_template('delete.html', location_id = locId, wine_id = wineId, wine = wine)
+		return render_template('delete.html', location_id = locId, wine_id = wineId, var = wine.wine_varietal, maker = wine.wine_maker)
+
 
 ###############################################################################
-# Handle New users
+# TEST LOGIN
 ###############################################################################
-def getUserId(email):
-	this_session = session()
-	try:
-		user = this_session.query(User).filter_by(email = email).one()
-		session.remove()
-		return user.id
-	except:
-		session.remove()
-		return None
-
-def getUserInfo(user_id):
-	this_session = session()
-
-	user = this_session.query(User).filter_by(id = user_id).one()
-	session.remove()
-	return user
-
-def createUser(login_session):
-	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
-	
-	this_session = session();
-	this_session.add(newUser)
-	this_session.commit()
-
-	user = this_session.query(User).filter_by(email = login_session['email']).one()
-	session.remove()
-	return user.id
+@app.route('/login')
+def login():
+	return redirect('/home')
 
 if __name__ == '__main__':
 	app.secret_key = "super_secret_key"

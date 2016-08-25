@@ -1,94 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
-  <title>Wine Catalog</title>
-
-  <!-- CSS  -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link href="{{ url_for('static', filename='materialize.css') }}" type="text/css" rel="stylesheet" media="screen,projection"/>
-  <link href="{{ url_for('static', filename='style.css') }}" type="text/css" rel="stylesheet" media="screen,projection"/>
-</head>
-<body>
-  <nav class="light-blue lighten-1" role="navigation">
-    <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo">Logo</a>
-      <ul class="right hide-on-med-and-down">
-        <li><a href="{{url_for('about')}}">About</a></li>
-      </ul>
-
-      <ul class="right hide-on-med-and-down">
-        <li>
-          {%if 'username' not in session%}
-          <a href="{{url_for('login')}}">Login</a>
-          {%else%}
-          <a href="{{url_for('gdisconnect')}}">Logout</a>
-          {%endif%}
-        </li>
-      </ul>
-
-      <ul id="nav-mobile" class="side-nav">
-        <li><a href="#">Navbar Link</a></li>
-      </ul>
-      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
-    </div>
-  </nav>
-  <div class="section no-pad-bot" id="index-banner">
-    <div class="container">
-      <br><br>
-      <h1 class="header center orange-text">Explore</h1>
-     
-      <div class="row center">
-      	{% for c in cat %}
-      		{% if c.location_id % 2 == 1 %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float:right"> {{ c.location_name}} </a> <br>
-        	{% else %}
-        		<a href="{{url_for('list', locId = c.location_id)}}" id="download-button" class="btn-large waves-effect waves-light orange" style = "float: left"> {{ c.location_name}} </a> <br>
-        	{% endif %}
-        	<br>
-        {% endfor %}
-      </div>
-      <br><br>
-
-      <table style="width:100%, text-align : center">
-      	<tr>
-      		<td><a href="{{url_for('main_page')}}" id="download-button" class="btn-large waves-effect waves-light orange"> BACK </a>
-      		<div>
-      		<td align="center"> <a class="btn-floating btn-large waves-effect waves-light red" style="float:right" href = "{{url_for('new_location')}}" class="button"><i class="material-icons">add</i></a> </td>
-      		</div>
-      	</tr>
-      </table>
-
-    </div>
-  </div>
-
-  <footer class="page-footer orange">
-    <div class="container">
-      <div class="row">
-        <div class="col l6 s12">
-          <h5 class="white-text">My Bio</h5>
-          <p class="grey-text text-lighten-4"> A onely traveller, who, will chase the last drops of bottled sunlight till, either my liver, or my wallet gives up.</p>
-
-
-        </div>
-        <div class="col l3 s12">
-          <h5 class="white-text">Connect</h5>
-          <ul>
-            <li><a class="white-text" href="https://www.facebook.com/rahulraghu1994">Facebook</a></li>
-            <li><a class="white-text" href="#!">Linkdin</a></li>
-            <li><a class="white-text" href="https://plus.google.com/u/0/105566728004606068745">Google+</a></li>
-            <li><a class="white-text" href="https://github.com/rahulraghu94">Github</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-
-  <!--  Scripts-->
-  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
-  <script src="{{ url_for('static', filename='materialize.js') }}"></script>
-  <script src="{{ url_for('static', filename='init.js') }}"></script>
-
-  </body>
+	<head>
+		<link href='http://fonts.googleapis.com/css?family=Roboto:400,300,700' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+		<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+	</head>
+	<body>
+		<div class="container">
+			{% block content %}
+			{% endblock %}
+		</div>
+	</body>
 </html>
