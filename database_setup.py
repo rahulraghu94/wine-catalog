@@ -36,7 +36,7 @@ class Catalog(Base):
 
     # For JSON API retrieval
     @property 
-    def ser(self):
+    def serialize(self):
         return {
             'id' : self.location_id,
             'name' : self.location_name,
