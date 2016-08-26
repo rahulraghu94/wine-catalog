@@ -10,22 +10,75 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 import httplib2
 import json
-from flask import make_response 
+from flask import make_response
 import requests
 from oauth2client.client import AccessTokenCredentials
 import wikipedia
 from redis import Redis
+from functools import update_wrapper
+import time
 
 redis = Redis()
 
 engine = create_engine('sqlite:///wineCatalog.db')
 Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)      
+DBSession = sessionmaker(bind=engine)
 session = scoped_session(DBSession)
 
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
+
+
+###############################################################################
+# Rate Limiting our API
+###############################################################################
+class RateLimit(object):
+	exp_window = 10
+
+	def __init__(self, key_prefix, limit, per, send_x_headers):
+		self.reset = (int(time.time()) // per) * per + per
+		self.key = key_prefix + str(self.reset)
+		self.limit = limit
+		self.per = per
+		self.send_x_headers = send_x_headers
+		p = redis.pipeline()
+		p.incr(self.key)
+		p.expireat(self.key, self.reset + self.exp_window)
+		self.current = min(p.execute()[0], limit)
+
+	remaining = property(lambda x: x.limit - x.current)
+	over_limit = property(lambda x: x.current >= x.limit)
+
+
+def view_rate():
+	return getattr(g, '_view_rate_limit', None)
+
+def on_over_limit(limit):
+	return (jsonify({'data':'You have hit rate limit', 'error':'429'}), 429)
+
+def rateLimit(limit, per = 300, send_x_headers = True, over_limit = on_over_limit, scope_func = lambda: request.remote_addr, key_func = lambda: request.endpoint):
+	def decorator(f):
+		def rate_limit(*args, **kwargs):
+			key = "(rate-limit/{}/{})".format(key_func(), scope_func())
+			rlimit = RateLimit(key, limit, per, send_x_headers)
+			g._view_rate_limit = rlimit
+			if over_limit is not None and rlimit.over_limit:
+				return over_limit(rlimit)
+			return f(*args, **kwargs)
+		return update_wrapper(rate_limit, f)
+	return decorator
+
+@app.after_request
+def after_request(response):
+	limit = view_rate()
+	if limit and limit.send_x_headers:
+		h = response.headers
+		h.add('X-RateLimit-Remaining', str(limit.remaining))
+		h.add('X-RateLimit-Limit', str(limit.limit))
+		h.add('X-RateLimit-Reset', str(limit.reset))
+	return response
+
 
 ###############################################################################
 # Test rate limit
@@ -67,9 +120,10 @@ def home():
 	return render_template('world.html')
 
 @app.route('/home/api')
+@rateLimit(limit = 300, per = 30 * 1)
 def get_countries():
-	if 'username' not in login_session:
-		return redirect('/login')
+	#if 'username' not in login_session:
+	#	return redirect('/login')
 
 	ses = session()
 
@@ -111,7 +165,7 @@ def location():
 # The /location page consists of a clickable map. When clicked, the map will
 # will repond with a JSON message back to the server through JQuery and AJAX
 # The JSON message will be sent from the client side to /list
-# The server, on /list will extract data of the country clicked from the 
+# The server, on /list will extract data of the country clicked from the
 # database and will render a page that lists all the wines of the country
 # This page can be used to add more wines, if logged in.
 ###############################################################################
@@ -131,9 +185,10 @@ def list():
 	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'])
 
 @app.route('/list/api', methods = ['GET', 'POST'])
+@rateLimit(limit = 300, per = 30 * 1)
 def get_wines():
-	if 'username' not in login_session:
-		return redirect('/login')
+	#if 'username' not in login_session:
+	#	return redirect('/login')
 
 	ses = session()
 	country = request.args.get('name')
@@ -142,6 +197,7 @@ def get_wines():
 	wine = ses.query(Wine).filter_by(loc_id = cat.location_id).all()
 	session.remove()
 	return jsonify(wine = [w.serialize for w in wine])
+
 ###############################################################################
 # Addig a wine
 ###############################################################################
@@ -156,8 +212,8 @@ def new_wine(locId):
 	country = location.location_name
 
 	if request.method == 'POST':
-		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'], 
-			wine_varietal = request.form['varietal'], 
+		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'],
+			wine_varietal = request.form['varietal'],
 	         wine_price = request.form['price'], loc_id = locId, wine = location)
 		this_session.add(new)
 		this_session.commit()
@@ -204,7 +260,7 @@ def edit_wine(locId, wineId):
 		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
 
 ###############################################################################
-# Edit a wine
+# Delete a wine
 ###############################################################################
 @app.route("/list/<int:locId>/<int:wineId>/delete/", methods=['GET', 'POST'])
 def delete_wine(locId, wineId):
@@ -218,14 +274,14 @@ def delete_wine(locId, wineId):
 
 	if not wine:
 		return "Wine already deleted"
-		
+
 	if request.method == 'POST':
 		this_session.delete(wine)
 		this_session.commit()
 		print("wine had been deleted!")
 		session.remove()
 		return redirect(url_for('list', name = country))
-	else:	
+	else:
 		session.remove()
 		return render_template('delete.html', location_id = locId, wine_id = wineId, var = wine.wine_varietal, maker = wine.wine_maker)
 
@@ -252,7 +308,7 @@ def getUserInfo(user_id):
 
 def createUser(login_session):
 	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
-	
+
 	this_session = session();
 	this_session.add(newUser)
 	this_session.commit()
@@ -283,7 +339,7 @@ def gconnect():
 	url = 'https://www.googleapis.com/oauth2/v2/tokeninfo?access_token='
 	url = url + access_token
 	h = httplib2.Http()
-	
+
 	result = json.loads(h.request(url, 'GET')[1].decode('utf-8'))
 
 	if result.get('error') is not None:
@@ -374,9 +430,6 @@ def login():
 	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(32))
 	login_session['state'] = state
 	return render_template('login.html', STATE=state)
-
-
-
 
 if __name__ == '__main__':
 	app.secret_key = "super_secret_key"
