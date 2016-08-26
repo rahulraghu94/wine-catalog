@@ -41,9 +41,9 @@
               <!--h3 class="masthead-brand">Rahul Raghunath</h3-->
               <nav>
                 <ul class="nav masthead-nav">
-                  <li class="active"><a href="{{url_for('main_page')}}">Home</a></li>
+                  <li><a href="{{url_for('main_page')}}">Home</a></li>
                   <li><a href="{{url_for('about')}}">About</a></li>
-                  <li><a href="{{url_for('api')}}"> API </a></li>
+                  <li class="active"><a href="{{url_for('api')}}"> API </a></li>
                 </ul>
               </nav>
             </div>
@@ -51,7 +51,10 @@
 
           <div class="inner cover">
             <h1 class="cover-heading">Winedurlust</h1>
-            <p class="lead">A Simple Catalog To Store All Your Favourite Wines.</p>
+            <p class="lead">Our API</p>
+            <p class="lead">
+              Our API's allow you to access our data base of countries of most popular wines across the world.
+            </p>
             <p class="lead">
               {%if 'username' not in session%}
               <a href="{{url_for('login')}}" class="btn btn-lg btn-default">Login</a>

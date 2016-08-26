@@ -14,6 +14,9 @@ from flask import make_response
 import requests
 from oauth2client.client import AccessTokenCredentials
 import wikipedia
+from redis import Redis
+
+redis = Redis()
 
 engine = create_engine('sqlite:///wineCatalog.db')
 Base.metadata.bind = engine
@@ -23,6 +26,14 @@ session = scoped_session(DBSession)
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
+
+###############################################################################
+# Test rate limit
+###############################################################################
+@app.route('/rate')
+def rate():
+	return jsonify({'response':'Theirs not to make reply!!!'})
+
 
 ###############################################################################
 # Main Page
@@ -39,6 +50,13 @@ def about():
 	return render_template('about.html')
 
 ###############################################################################
+# API Details
+###############################################################################
+@app.route("/api")
+def api():
+	return render_template('API.html')
+
+###############################################################################
 # Display World Map that is clickable
 ###############################################################################
 @app.route('/home')
@@ -47,6 +65,17 @@ def home():
 		return redirect('/login')
 	print(login_session)
 	return render_template('world.html')
+
+@app.route('/home/api')
+def get_countries():
+	if 'username' not in login_session:
+		return redirect('/login')
+
+	ses = session()
+
+	catalog = ses.query(Catalog).all()
+
+	return jsonify(cat = [c.serialize for c in catalog])
 
 ###############################################################################
 # This function recieves the name of the country as clicked on the world map.
@@ -101,6 +130,18 @@ def list():
 	locId = catalog.location_id
 	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'])
 
+@app.route('/list/api', methods = ['GET', 'POST'])
+def get_wines():
+	if 'username' not in login_session:
+		return redirect('/login')
+
+	ses = session()
+	country = request.args.get('name')
+	print("country is: ", country)
+	cat = ses.query(Catalog).filter_by(location_name = country).one()
+	wine = ses.query(Wine).filter_by(loc_id = cat.location_id).all()
+	session.remove()
+	return jsonify(wine = [w.serialize for w in wine])
 ###############################################################################
 # Addig a wine
 ###############################################################################
