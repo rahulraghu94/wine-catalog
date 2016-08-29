@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, jsonify, abort, g
-from flask_httpauth import HTTPBasicAuth
+#from flask_httpauth import HTTPBasicAuth
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -13,7 +13,7 @@ import json
 from flask import make_response
 import requests
 from oauth2client.client import AccessTokenCredentials
-import wikipedia
+#import wikipedia
 from redis import Redis
 from functools import update_wrapper
 import time
