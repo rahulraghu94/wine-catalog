@@ -26,6 +26,7 @@ DBSession = sessionmaker(bind=engine)
 session = scoped_session(DBSession)
 
 app = Flask(__name__)
+app.secret_key = "super_secret_key"
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
@@ -119,7 +120,7 @@ def home():
 	print(login_session)
 	return render_template('world.html')
 
-@app.route('/home/api')
+@app.route('/home/v1/countries')
 @rateLimit(limit = 300, per = 30 * 1)
 def get_countries():
 	#if 'username' not in login_session:
@@ -184,7 +185,7 @@ def list():
 	locId = catalog.location_id
 	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'])
 
-@app.route('/list/api', methods = ['GET', 'POST'])
+@app.route('/list/v1/wines', methods = ['GET', 'POST'])
 @rateLimit(limit = 300, per = 30 * 1)
 def get_wines():
 	#if 'username' not in login_session:
@@ -432,6 +433,5 @@ def login():
 	return render_template('login.html', STATE=state)
 
 if __name__ == '__main__':
-	app.secret_key = "super_secret_key"
 	app.debug = True
-	app.run(host = '0.0.0.0', port = 8000)
+	app.run(host = '0.0.0.0', port = 5000)
