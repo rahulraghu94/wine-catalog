@@ -4,7 +4,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 #used to create our foreign ey relationships
 from sqlalchemy.orm  import relationship
-from passlib.apps import custom_app_context as pwd_context
+#from passlib.apps import custom_app_context as pwd_context
 from sqlalchemy import create_engine
 import random, string
 from itsdangerous import(TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
@@ -35,7 +35,7 @@ class Catalog(Base):
     user = relationship(User)
 
     # For JSON API retrieval
-    @property 
+    @property
     def serialize(self):
         return {
             'id' : self.location_id,
