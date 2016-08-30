@@ -183,7 +183,7 @@ def list():
 	catalog = this_session.query(Catalog).filter_by(location_name = country).one()
 	wine = this_session.query(Wine).filter_by(loc_id = catalog.location_id).all()
 	locId = catalog.location_id
-	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'])
+	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'], pic = login_session['picture'])
 
 @app.route('/list/v1/wines', methods = ['GET', 'POST'])
 @rateLimit(limit = 300, per = 30 * 1)
@@ -419,7 +419,7 @@ def gdisconnect():
 
 		response = make_response(json.dumps('Successfully disconnected!'), 200)
 		response.headers['Content-tyoe'] = 'application/json'
-		return response
+		return redirect('/home')
 
 	else:
 		response = make_response(json.dumps("Something went wrong... Try again"), 400)
