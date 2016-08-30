@@ -83,12 +83,12 @@
         <div class="row">
             <div class="col-sm-8">
 
-                <a 
-                    href="javascript:;" 
-                    data-toggle="popover" 
+                <a
+                    href="javascript:;"
+                    data-toggle="popover"
                     data-html="true"
-                    class="btn btn-success btn-lg" 
-                    title="Popover Header" 
+                    class="btn btn-success btn-lg"
+                    title="Popover Header"
                     data-content="<form action='{{url_for('new_wine', locId = location_id)}}' method=post>
                                     <div class='form-group'>
                                         <label>Maker:</label>
@@ -113,11 +113,11 @@
 
                 <script>
                     $(document).ready(function(){
-                        $('[data-toggle="popover"]').popover();   
+                        $('[data-toggle="popover"]').popover();
                     },
                     $('.popover-dismiss').popover({
   						trigger: 'focus'
-					});      
+					});
                 </script>
 
                 <br><br><br>
@@ -125,25 +125,28 @@
 				<h2> {{w.wine_varietal}}, by {{w.wine_maker}} </h2>
 				<h4> Vintage: {{w.wine_vintage}} </h4>
 				<h4> Price: {{w.wine_price}} </h4>
-                <h6>Creator: {{name}} <h6>
+                {% if 'pic' not in  session%}
+                {}
+                {%endif%}
+                <h6><img src = "{{pic}}" style="width:30px;height:30px"> Creator: {{name}} </h6>
                 <p>
-                    <a 
-                    class="btn btn-lg btn-lg" 
+                    <a
+                    class="btn btn-lg btn-lg"
                     href="javascript:;"
-                    data-toggle="popover" 
+                    data-toggle="popover"
                     data-html="true"
                     data-content="<form action= '{{url_for('delete_wine', locId = location_id, wineId = w.wine_id)}}'' method = post>
       								<button type='submit' class='btn btn-default'>Delete</button>
 						      	</form>">
-                    Delete 
+                    Delete
                 	</a>
 
-                    <a 
-                    href="javascript:;" 
-                    data-toggle="popover" 
+                    <a
+                    href="javascript:;"
+                    data-toggle="popover"
                     data-html="true"
-                    class="btn btn-lg btn-lg" 
-                    title="Edit" 
+                    class="btn btn-lg btn-lg"
+                    title="Edit"
                     data-content="<form action= '{{url_for('edit_wine', locId = location_id, wineId = w.wine_id)}}' method=post>
                                     <div class='form-group'>
                                         <label>Maker:</label>

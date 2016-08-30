@@ -72,7 +72,7 @@
 
           },
           error: function(req, err)
-          { 
+          {
             console.log('my message: ' + req);
           }
         });
@@ -92,6 +92,7 @@
                 <ul class="nav masthead-nav">
                   <li><a href="{{url_for('main_page')}}">Home</a></li>
                   <li><a href="{{url_for('about')}}">About</a></li>
+                  <li><a href="{{url_for('api')}}"> API </a></li>
                 </ul>
               </nav>
             </div>
@@ -100,7 +101,7 @@
           <div class="inner cover">
             <h1 class="cover-heading">Login Through Google+</h1>
             <p class="lead">
-              
+
                 <div id = "signinButton">
                 <span class = "g-signin"
                   data-scope = "openid"
