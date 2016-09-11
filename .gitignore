@@ -6,3 +6,6 @@
 
 #exclude __pycache__
 __pycache__/
+
+#exclude log files
+*.log
