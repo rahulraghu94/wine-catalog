@@ -9,11 +9,13 @@ from redis import Redis
 from functools import update_wrapper
 import time
 import pg
+import logging
+from logging.handlers import RotatingFileHandler
 
 redis = Redis()
 db = pg.DB(dbname = 'wine-database')
-
 app = Flask(__name__)
+
 app.secret_key = "super_secret_key"
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
@@ -52,6 +54,7 @@ def rateLimit(limit, per = 300, send_x_headers = True, over_limit = on_over_limi
 			rlimit = RateLimit(key, limit, per, send_x_headers)
 			g._view_rate_limit = rlimit
 			if over_limit is not None and rlimit.over_limit:
+				app.logger.warning("Resource is being Hogged!")
 				return over_limit(rlimit)
 			return f(*args, **kwargs)
 		return update_wrapper(rate_limit, f)
@@ -66,14 +69,6 @@ def after_request(response):
 		h.add('X-RateLimit-Limit', str(limit.limit))
 		h.add('X-RateLimit-Reset', str(limit.reset))
 	return response
-
-
-###############################################################################
-# Test rate limit
-###############################################################################
-@app.route('/rate')
-def rate():
-	return jsonify({'response':'Theirs not to make reply!!!'})
 
 
 ###############################################################################
@@ -104,7 +99,6 @@ def api():
 def home():
 	if 'username' not in login_session:
 		return redirect('/login')
-	print(login_session)
 	return render_template('world.html')
 
 @app.route('/home/v1/countries')
@@ -116,7 +110,7 @@ def get_countries():
 	catalog = db.query('select * from catalog')
 	cat = catalog.dictresult()
 	db.query('end')
-
+	app.logger.info("Countries accessed")
 	return jsonify(cat)
 
 ###############################################################################
@@ -133,20 +127,17 @@ def location():
 		return redirect('/login')
 
 	country = request.json['name']
-	print(country)
 	db.query('begin')
 	query = ("select * from catalog where location_name = '{}'").format(country)
-	print(query)
 
 	catalog = db.query(query)
 	catalog = catalog.dictresult()
-	print(catalog)
 
 	if not catalog:
 		db.insert('catalog', {'location_name':country, 'user_id':login_session['user_id']})
+		app.logger.info("New country Created:", country)
 		db.query('end')
 	else:
-		print("Country exists ...")
 		db.query('end')
 		return "motherfucker"
 
@@ -201,6 +192,7 @@ def get_wines():
 	wine = db.query(query)
 	wine = wine.dictresult()
 	db.query('end')
+	app.logger.info("wines accessed")
 	return jsonify(wine)
 
 ###############################################################################
@@ -224,10 +216,10 @@ def new_wine(locId):
 	         'wine_price' : request.form['price'], 'loc_id': locId, 'user_id':user_id}
 		db.insert('wine', new)
 		db.query('end')
+		app.logger.info("New Wine Added!")
 		return redirect(url_for('list', name = country))
 
 	else:
-		print("Rendering entered")
 		query = ("select * from users where id = '{}'").format(wine[0]['user_id'])
 		user = db.query(query)
 		user = user.dictresult()
@@ -249,9 +241,9 @@ def edit_wine(locId, wineId):
 	country = catalog[0]['location_name']
 
 	query = ("select * from wine where wine_id = '{}'").format(wineId)
-	wine_old = db.query(query)
-	wine_old = wine_old.dictresult()
-	wine = wine_old[0]
+	wine = db.query(query)
+	wine = wine_old.dictresult()
+	wine = wine[0]
 
 	if request.method == 'POST':
 		if request.form['maker']:
@@ -265,7 +257,7 @@ def edit_wine(locId, wineId):
 
 		db.update('wine', wine)
 		db.query('end')
-
+		app.logger.info("Wine Edited: ID = ", wine['wine_id'])
 		return redirect(url_for('list', name = country))
 
 	else:
@@ -300,9 +292,9 @@ def delete_wine(locId, wineId):
 		return "Wine already deleted"
 
 	if request.method == 'POST':
-		print("wine had been deleted!")
 		db.delete('wine', wine)
 		db.query('end')
+		app.logger.info("Wine deleted: ID = ", wine['wine_id'])
 		return redirect(url_for('list', name = country))
 	else:
 		query = ("select * from users where id = '{}'").format(wine[0]['user_id'])
@@ -317,38 +309,24 @@ def delete_wine(locId, wineId):
 def getUserId(email):
 	try:
 		db.query('begin')
-		print("Email is: ", email)
 		query = ("select * from users where email = '{}'").format(email)
 		user = db.query(query)
 		user = user.dictresult()
-		print("(getUserId) Found user is: ", user)
 		db.query('end')
 		return user[0]['id']
 	except:
 		return None
 
 def getUserInfo(user_id):
-	#this_session = session()
-	print("Trying to get user id...")
 	db.query('begin')
 	user = ("select * from users where id = '{}'").format(user_id)
 	user = user.dictresult()
 	user = user[0]
 	db.query('end')
-	#user = this_session.query(User).filter_by(id = user_id).one()
-	#session.remove()
-	print("Get user info done...Returning ", user)
 	return user
 
 def createUser(login_session):
 	new_user = {'name' : login_session['username'], 'email' : login_session['email'], 'picture' : login_session['picture']}
-
-	#this_session = session();
-	#this_session.add(newUser)
-	#this_session.commit()
-	#
-
-	print("Creating user info: ", new_user)
 
 	db.query('begin')
 	db.insert('users', new_user)
@@ -356,9 +334,7 @@ def createUser(login_session):
 	user = db.query(query)
 	user = user.dictresult()
 	user = user[0]
-	#user = this_session.query(User).filter_by(email = login_session['email']).one()
-	#session.remove()
-
+	app.logger.info("Created User: ID = ", users['id'])
 	db.query('end')
 	return user['id']
 
@@ -400,7 +376,6 @@ def gconnect():
 
 	if result['issued_to'] != CLIENT_ID:
 		response = make_response(json.dumps('Client ID mismatch'), 401)
-		print("Check client ID")
 		response.headers['Content-tyoe'] = 'application/json'
 		return response
 
@@ -421,8 +396,6 @@ def gconnect():
 	answer = requests.get(userinfo_url, params=params)
 	data = json.loads(answer.text)
 
-	#print(data)
-
 	login_session['username'] = data["name"]
 	login_session['picture'] = data["picture"]
 	login_session['email'] = data["link"]
@@ -430,16 +403,16 @@ def gconnect():
 	user_id = getUserId(login_session['email'])
 
 	if not user_id:
-		print("User ID not got... :(")
 		user_id = createUser(login_session)
 	login_session['user_id'] = user_id
 
-	return "rmuterfucker"
+	app.logger.info("New User Connected: ID = ", user_id)
+
+	return "Done: 200"
 
 @app.route("/gdisconnect")
 def gdisconnect():
 	credentials = login_session['credentials']
-	print("Credentials are:", credentials)
 	if credentials is None:
 		response = make_response(json.dumps('The currant user is not logged in'), 401)
 		response.headers['Content-tyoe'] = 'application/json'
@@ -449,12 +422,8 @@ def gdisconnect():
 	url = "https://accounts.google.com/o/oauth2/revoke?token="
 	url += access_token
 
-	print(url)
-
 	h = httplib2.Http()
 	result = h.request(url, 'GET')[0]
-
-	print(result)
 
 	if result['status'] == '200':
 		del login_session['username']
@@ -463,6 +432,9 @@ def gdisconnect():
 
 		response = make_response(json.dumps('Successfully disconnected!'), 200)
 		response.headers['Content-tyoe'] = 'application/json'
+
+		app.logger.info("User Disconnected: ID = ", login_session['user_id'])
+
 		return redirect('/home')
 
 	else:
@@ -476,6 +448,15 @@ def login():
 	login_session['state'] = state
 	return render_template('login.html', STATE=state)
 
+@app.errorhandler(500)
+def internal_error(exception):
+	app.logger.error(exception)
+
 if __name__ == '__main__':
 	app.debug = True
+	handler = RotatingFileHandler('wine-catalog.log', maxBytes=10000, backupCount=1)
+	handler.setLevel(logging.INFO)
+	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+	handler.setFormatter(formatter)
+	app.logger.addHandler(handler)
 	app.run(host = '0.0.0.0', port = 5000)
