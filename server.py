@@ -1,13 +1,10 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, jsonify, abort, g
+from flask import Flask, render_template, request, url_for, redirect, flash, jsonify, abort, g, make_response, session as login_session
 import random, string
-from flask import session as login_session
-from oauth2client.client import flow_from_clientsecrets
-from oauth2client.client import FlowExchangeError
+#from flask import session as login_session
+from oauth2client.client import flow_from_clientsecrets, FlowExchangeError, AccessTokenCredentials
 import httplib2
 import json
-from flask import make_response
 import requests
-from oauth2client.client import AccessTokenCredentials
 from redis import Redis
 from functools import update_wrapper
 import time
