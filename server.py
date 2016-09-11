@@ -1,9 +1,4 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, jsonify, abort, g
-#from flask_httpauth import HTTPBasicAuth
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, scoped_session
-from database_setup import Catalog, Base, Wine, User
 import random, string
 from flask import session as login_session
 from oauth2client.client import flow_from_clientsecrets
@@ -13,23 +8,18 @@ import json
 from flask import make_response
 import requests
 from oauth2client.client import AccessTokenCredentials
-#import wikipedia
 from redis import Redis
 from functools import update_wrapper
 import time
+import pg
 
 redis = Redis()
-
-engine = create_engine('sqlite:///wineCatalog.db')
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-session = scoped_session(DBSession)
+db = pg.DB(dbname = 'wine-database')
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
-
 
 ###############################################################################
 # Rate Limiting our API
@@ -125,12 +115,12 @@ def home():
 def get_countries():
 	#if 'username' not in login_session:
 	#	return redirect('/login')
+	db.query('begin')
+	catalog = db.query('select * from catalog')
+	cat = catalog.dictresult()
+	db.query('end')
 
-	ses = session()
-
-	catalog = ses.query(Catalog).all()
-
-	return jsonify(cat = [c.serialize for c in catalog])
+	return jsonify(cat)
 
 ###############################################################################
 # This function recieves the name of the country as clicked on the world map.
@@ -144,21 +134,23 @@ def get_countries():
 def location():
 	if 'username' not in login_session:
 		return redirect('/login')
+
 	country = request.json['name']
 	print(country)
+	db.query('begin')
+	query = ("select * from catalog where location_name = '{}'").format(country)
+	print(query)
 
-	this_session = session()
+	catalog = db.query(query)
+	catalog = catalog.dictresult()
+	print(catalog)
 
-	if this_session.query(Catalog).filter_by(location_name = country).scalar() is None:
-		print("Country does not exits...")
-		catalog = Catalog(location_name = country, user_id = login_session['user_id'])
-		this_session.add(catalog)
-		this_session.commit()
-		session.remove()
-		return "motherfucker"
+	if not catalog:
+		db.insert('catalog', {'location_name':country, 'user_id':login_session['user_id']})
+		db.query('end')
 	else:
 		print("Country exists ...")
-		session.remove()
+		db.query('end')
 		return "motherfucker"
 
 
@@ -175,29 +167,44 @@ def list():
 	if 'username' not in login_session:
 		return redirect('/login')
 	country = request.args.get('name')
-	query = country
-	query = query + " wine"
-	#country_data = wikipedia.summary(query)
-	this_session = session()
+	db.query('begin')
+	query = ("select * from catalog where location_name = '{}'").format(country)
 
-	catalog = this_session.query(Catalog).filter_by(location_name = country).one()
-	wine = this_session.query(Wine).filter_by(loc_id = catalog.location_id).all()
-	locId = catalog.location_id
-	return render_template('list.html', cat = catalog, wine = wine, location_id = locId, name = login_session['username'], pic = login_session['picture'])
+	cat = db.query(query)
+	cat = cat.dictresult()
+
+	loc_id = cat[0]['location_id']
+	query = ("select * from wine where loc_id = {}").format(loc_id)
+	wine = db.query(query)
+	wine = wine.dictresult()
+
+	query = ("select * from users where id = '{}'").format(cat[0]['user_id'])
+	user = db.query(query)
+	db.query('end')
+	user = user.dictresult()
+
+
+	return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, user = user[0])
 
 @app.route('/list/v1/wines', methods = ['GET', 'POST'])
 @rateLimit(limit = 300, per = 30 * 1)
 def get_wines():
-	#if 'username' not in login_session:
-	#	return redirect('/login')
 
-	ses = session()
 	country = request.args.get('name')
-	print("country is: ", country)
-	cat = ses.query(Catalog).filter_by(location_name = country).one()
-	wine = ses.query(Wine).filter_by(loc_id = cat.location_id).all()
-	session.remove()
-	return jsonify(wine = [w.serialize for w in wine])
+	db.query('begin')
+	query = ("select * from catalog where location_name = '{}'").format(country)
+
+	cat = db.query(query)
+	cat = cat.dictresult()
+	loc_id = cat[0]['location_id']
+
+
+	query = ("select * from wine where loc_id = '{}'").format(loc_id)
+
+	wine = db.query(query)
+	wine = wine.dictresult()
+	db.query('end')
+	return jsonify(wine)
 
 ###############################################################################
 # Addig a wine
@@ -206,27 +213,29 @@ def get_wines():
 def new_wine(locId):
 	if 'username' not in login_session:
 		return redirect('/login')
-	this_session = session()
 
-	location = this_session.query(Catalog).filter_by(location_id=locId).one()
-
-	country = location.location_name
+	db.query('begin')
+	query = ("select * from catalog where location_id = {}").format(locId)
+	location = db.query(query)
+	location = location.dictresult()
+	country = location[0]['location_name']
+	user_id = getUserId(login_session['email'])
 
 	if request.method == 'POST':
-		new = Wine(wine_maker = request.form['maker'], wine_vintage = request.form['vintage'],
-			wine_varietal = request.form['varietal'],
-	         wine_price = request.form['price'], loc_id = locId, wine = location)
-		this_session.add(new)
-		this_session.commit()
-		flash("New wine added!")
-		session.remove()
+		new = {'wine_maker' :request.form['maker'], 'wine_vintage': request.form['vintage'],
+			'wine_varietal': request.form['varietal'],
+	         'wine_price' : request.form['price'], 'loc_id': locId, 'user_id':user_id}
+		db.insert('wine', new)
+		db.query('end')
 		return redirect(url_for('list', name = country))
 
 	else:
 		print("Rendering entered")
-		session.remove()
-		return render_template('add.html', location_id = locId)
-
+		query = ("select * from users where id = '{}'").format(wine[0]['user_id'])
+		user = db.query(query)
+		user = user.dictresult()
+		db.query('end')
+		return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, pic = user[0]['picture'])
 
 ###############################################################################
 # Edit a wine
@@ -235,30 +244,39 @@ def new_wine(locId):
 def edit_wine(locId, wineId):
 	if 'username' not in login_session:
 		return redirect('/login')
-	this_session = session()
-	location = this_session.query(Catalog).filter_by(location_id=locId).one()
-	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
 
-	country = location.location_name
+	db.query('begin')
+	query = ("select * from catalog where location_id = '{}'").format(locId)
+	catalog = db.query(query)
+	catalog = catalog.dictresult()
+	country = catalog[0]['location_name']
+
+	query = ("select * from wine where wine_id = '{}'").format(wineId)
+	wine_old = db.query(query)
+	wine_old = wine_old.dictresult()
+	wine = wine_old[0]
 
 	if request.method == 'POST':
 		if request.form['maker']:
-			wine.wine_maker = request.form['maker']
+			wine['wine_maker'] = request.form['maker']
 		if request.form['varietal']:
-			wine.wine_varietal = request.form['varietal']
+			wine['wine_varietal'] = request.form['varietal']
 		if request.form['vintage']:
-			wine.wine_vintage = request.form['vintage']
+			wine['wine_vintage'] = request.form['vintage']
 		if request.form['price']:
-			wine.wine_price = request.form['price']
+			wine['wine_price'] = request.form['price']
 
-		this_session.add(wine)
-		this_session.commit()
-		session.remove()
+		db.update('wine', wine)
+		db.query('end')
+
 		return redirect(url_for('list', name = country))
 
 	else:
-		session.remove()
-		return render_template('edit.html', location_id = locId, wine_id = wineId, wine = wine)
+		query = ("select * from users where id = '{}'").format(wine[0]['user_id'])
+		user = db.query(query)
+		user = user.dictresult()
+		db.query('end')
+		return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, pic = user[0]['picture'])
 
 ###############################################################################
 # Delete a wine
@@ -267,56 +285,85 @@ def edit_wine(locId, wineId):
 def delete_wine(locId, wineId):
 	if 'username' not in login_session:
 		return redirect('/login')
-	this_session = session()
-	location = this_session.query(Catalog).filter_by(location_id=locId).one()
-	wine = this_session.query(Wine).filter_by(wine_id = wineId).one()
 
-	country = location.location_name
+	db.query('begin')
+	query = ("select * from catalog where location_id = '{}'").format(locId)
+	catalog = db.query(query)
+	catalog = catalog.dictresult()
+
+	country = catalog[0]['location_name']
+
+	query = ("select * from wine where wine_id = '{}'").format(wineId)
+	wine = db.query(query)
+	wine = wine.dictresult()
+	wine = wine[0]
 
 	if not wine:
+		db.query('end')
 		return "Wine already deleted"
 
 	if request.method == 'POST':
-		this_session.delete(wine)
-		this_session.commit()
 		print("wine had been deleted!")
-		session.remove()
+		db.delete('wine', wine)
+		db.query('end')
 		return redirect(url_for('list', name = country))
 	else:
-		session.remove()
-		return render_template('delete.html', location_id = locId, wine_id = wineId, var = wine.wine_varietal, maker = wine.wine_maker)
-
+		query = ("select * from users where id = '{}'").format(wine[0]['user_id'])
+		user = db.query(query)
+		user = user.dictresult()
+		db.query('end')
+		return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, pic = user[0]['picture'])
 
 ###############################################################################
 # Login
 ###############################################################################
 def getUserId(email):
-	this_session = session()
 	try:
-		user = this_session.query(User).filter_by(email = email).one()
-		session.remove()
-		return user.id
+		db.query('begin')
+		print("Email is: ", email)
+		query = ("select * from users where email = '{}'").format(email)
+		user = db.query(query)
+		user = user.dictresult()
+		print("(getUserId) Found user is: ", user)
+		db.query('end')
+		return user[0]['id']
 	except:
-		session.remove()
 		return None
 
 def getUserInfo(user_id):
-	this_session = session()
-
-	user = this_session.query(User).filter_by(id = user_id).one()
-	session.remove()
+	#this_session = session()
+	print("Trying to get user id...")
+	db.query('begin')
+	user = ("select * from users where id = '{}'").format(user_id)
+	user = user.dictresult()
+	user = user[0]
+	db.query('end')
+	#user = this_session.query(User).filter_by(id = user_id).one()
+	#session.remove()
+	print("Get user info done...Returning ", user)
 	return user
 
 def createUser(login_session):
-	newUser = User(name = login_session['username'], email = login_session['email'], picture = login_session['picture'])
+	new_user = {'name' : login_session['username'], 'email' : login_session['email'], 'picture' : login_session['picture']}
 
-	this_session = session();
-	this_session.add(newUser)
-	this_session.commit()
+	#this_session = session();
+	#this_session.add(newUser)
+	#this_session.commit()
+	#
 
-	user = this_session.query(User).filter_by(email = login_session['email']).one()
-	session.remove()
-	return user.id
+	print("Creating user info: ", new_user)
+
+	db.query('begin')
+	db.insert('users', new_user)
+	query = ("select * from users where email = '{}'").format(login_session['email'])
+	user = db.query(query)
+	user = user.dictresult()
+	user = user[0]
+	#user = this_session.query(User).filter_by(email = login_session['email']).one()
+	#session.remove()
+
+	db.query('end')
+	return user['id']
 
 @app.route('/gconnect', methods = ['POST'])
 def gconnect():
@@ -377,7 +424,7 @@ def gconnect():
 	answer = requests.get(userinfo_url, params=params)
 	data = json.loads(answer.text)
 
-	print(data)
+	#print(data)
 
 	login_session['username'] = data["name"]
 	login_session['picture'] = data["picture"]
