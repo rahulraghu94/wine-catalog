@@ -1,5 +1,5 @@
 A simple full stacks web application that will host my Wine Catalog.
-Using Python with Flask and SQLAlchemy. The application was a way to learn
+Using Python with Flask and PostgreSQL. The application was a way to learn
 the intricacies of full stack web development, to integrate databases, to
 learn a framework and to integrate front-end design.
 
