@@ -54,13 +54,14 @@
             <p class="lead">A Simple Catalog To Store All Your Favourite Wines.</p>
 
             <p class="lead"> I'm a pre-graduate computer science student who loves a good coding session and a good wine tasting. I've had experiences with many tech platforms and projects as well as wines from many regions. The concept of having two fields of expertise, one to challenge the mind and another to enlighten the soul is what, I believe, helps maintain a peaceful, well balanced life.</p>
-            
+
             <br><br>
             <p class="lead">
               {%if 'username' not in session%}
               <a href="{{url_for('login')}}" class="btn btn-lg btn-default">Login</a>
               {%else%}
               <a href="{{url_for('gdisconnect')}}" class="btn btn-lg btn-default">Logout</a>
+              <a href="{{url_for('home')}}" class="btn btn-lg btn-default">Map</a>
               {%endif%}
             </p>
           </div>
