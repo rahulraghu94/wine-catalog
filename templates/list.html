@@ -82,7 +82,8 @@
 
         <div class="row">
             <div class="col-sm-8">
-
+                <H3> Welcome, {{wine[0]['user_name']}}! </h3>
+                <hr>
                 <a
                     href="javascript:;"
                     data-toggle="popover"
@@ -171,8 +172,6 @@
                 {%endfor%}
             </div>
             <div class="col-sm-4">
-                <H3> Wlcome, {{wine[0]['user_name']}}! </h3>
-                <hr>
                 <h2>About wines of {{cat[0]['location_name']}}</h2>
                 <p> {{info}} </p>
             </div>
