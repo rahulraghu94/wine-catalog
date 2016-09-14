@@ -14,6 +14,7 @@ import pg
 import logging
 from logging.handlers import RotatingFileHandler
 import urlparse
+import wikipedia
 
 redis = Redis()
 #db = pg.DB(dbname = 'wine-database')
@@ -178,8 +179,12 @@ def list():
 	db.query('end')
 	user = user.dictresult()
 
+	wiki = country
+	wiki += "wines"
+	info = wikipedia.summary(wiki)
 
-	return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, user = user[0])
+
+	return render_template('list.html', cat = cat, wine = wine, location_id = loc_id, user = user[0], info = info)
 
 @app.route('/list/v1/wines', methods = ['GET', 'POST'])
 @rateLimit(limit = 300, per = 30 * 1)
