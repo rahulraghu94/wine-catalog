@@ -180,7 +180,7 @@ def list():
 	user = user.dictresult()
 
 	wiki = country
-	wiki += "wines"
+	wiki += " wines"
 	info = wikipedia.summary(wiki)
 
 
