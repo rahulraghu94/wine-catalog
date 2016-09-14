@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+
 from flask import Flask, render_template, request, url_for, redirect, flash, jsonify, abort, g, make_response, session as login_session
 import random, string
 #from flask import session as login_session
@@ -11,9 +13,14 @@ import time
 import pg
 import logging
 from logging.handlers import RotatingFileHandler
+import urlparse
 
 redis = Redis()
-db = pg.DB(dbname = 'wine-database')
+#db = pg.DB(dbname = 'wine-database')
+url = "postgres://yxdfmijogkeoqu:nJHb0aelUdgoS4vAQAdR35qIRg@ec2-23-21-164-237.compute-1.amazonaws.com:5432/d3rcfql3m4pa15"
+url = urlparse.urlparse(url)
+db = pg.DB(dbname = "d3rcfql3m4pa15", host = url.hostname, port = url.port, user = url.username, passwd = url.password)
+
 app = Flask(__name__)
 
 app.secret_key = "super_secret_key"
@@ -242,7 +249,7 @@ def edit_wine(locId, wineId):
 
 	query = ("select * from wine where wine_id = '{}'").format(wineId)
 	wine = db.query(query)
-	wine = wine_old.dictresult()
+	wine = wine.dictresult()
 	wine = wine[0]
 
 	if request.method == 'POST':
@@ -459,4 +466,4 @@ if __name__ == '__main__':
 	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 	handler.setFormatter(formatter)
 	app.logger.addHandler(handler)
-	app.run(host = '0.0.0.0', port = 5000)
+	#app.run(host = '0.0.0.0', port = 5000)
