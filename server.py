@@ -173,6 +173,18 @@ def list():
 	query = ("select * from wine where loc_id = {}").format(loc_id)
 	wine = db.query(query)
 	wine = wine.dictresult()
+	user_id = getUserId(login_session['email'])
+
+	query = ("select * from users where id = '{}'").format(user_id)
+	user = db.query(query)
+	user = user.dictresult()
+	user_name = user[0]['name']
+	user_picture = user[0]['picture']
+
+	print("name:", user_name)
+	print("picture:", user_picture)
+
+	print("USer ID: ", wine[0]['user_id'])
 
 	query = ("select * from users where id = '{}'").format(cat[0]['user_id'])
 	user = db.query(query)
@@ -222,10 +234,19 @@ def new_wine(locId):
 	country = location[0]['location_name']
 	user_id = getUserId(login_session['email'])
 
+	query = ("select * from users where id = '{}'").format(user_id)
+	user = db.query(query)
+	user = user.dictresult()
+	user_name = user[0]['name']
+	user_picture = user[0]['picture']
+
+	print("name:", user_name)
+	print("picture:", user_picture)
+
 	if request.method == 'POST':
 		new = {'wine_maker' :request.form['maker'], 'wine_vintage': request.form['vintage'],
 			'wine_varietal': request.form['varietal'],
-	         'wine_price' : request.form['price'], 'loc_id': locId, 'user_id':user_id}
+	         'wine_price' : request.form['price'], 'loc_id': locId, 'user_id':user_id, 'user_name':user_name, 'user_picture':user_picture}
 		db.insert('wine', new)
 		db.query('end')
 		app.logger.info("New Wine Added!")
@@ -256,6 +277,13 @@ def edit_wine(locId, wineId):
 	wine = db.query(query)
 	wine = wine.dictresult()
 	wine = wine[0]
+	user_id = getUserId(login_session['email'])
+
+	query = ("select * from users where id = '{}'").format(user_id)
+	user = db.query(query)
+	user = user.dictresult()
+	user_name = user[0]['name']
+	user_picture = user[0]['picture']
 
 	if request.method == 'POST':
 		if request.form['maker']:
@@ -472,4 +500,4 @@ if __name__ == '__main__':
 	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 	handler.setFormatter(formatter)
 	app.logger.addHandler(handler)
-	#app.run(host = '0.0.0.0', port = 5000)
+	app.run(host = '0.0.0.0', port = 5000)
