@@ -181,11 +181,6 @@ def list():
 	user_name = user[0]['name']
 	user_picture = user[0]['picture']
 
-	print("name:", user_name)
-	print("picture:", user_picture)
-
-	print("USer ID: ", wine[0]['user_id'])
-
 	query = ("select * from users where id = '{}'").format(cat[0]['user_id'])
 	user = db.query(query)
 	db.query('end')
@@ -239,9 +234,6 @@ def new_wine(locId):
 	user = user.dictresult()
 	user_name = user[0]['name']
 	user_picture = user[0]['picture']
-
-	print("name:", user_name)
-	print("picture:", user_picture)
 
 	if request.method == 'POST':
 		new = {'wine_maker' :request.form['maker'], 'wine_vintage': request.form['vintage'],
