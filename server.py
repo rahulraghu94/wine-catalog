@@ -341,7 +341,7 @@ def createUser(login_session):
 	user = db.query(query)
 	user = user.dictresult()
 	user = user[0]
-	app.logger.info("Created User: ID = ", users['id'])
+	app.logger.info("Created User: ID = ", user['id'])
 	db.query('end')
 	return user['id']
 
@@ -448,6 +448,7 @@ def gdisconnect():
 		response = make_response(json.dumps("Something went wrong... Try again"), 400)
 		response.headers['Content-tyoe'] = 'application/json'
 		return response
+	return 'ok'
 
 @app.route('/login')
 def login():
