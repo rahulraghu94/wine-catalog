@@ -7,11 +7,11 @@ import json
 h = httplib2.Http()
 
 url = input("Please enter the uri you want to access, \n If left blank the connection will be set to 'http://localhost:8000/home/api':   ")
-if url == '':
-	url = 'http://localhost/home/api'
+#if url == '':
+#	url = 'http://localhost/home/api'
 
 
-req_per_minute = float(input("Please specify the number of requests per minute:  ") )
+req_per_minute = 600 #float(input("Please specify the number of requests per minute:  ") )
 
 
 interval = (60.0 / req_per_minute)

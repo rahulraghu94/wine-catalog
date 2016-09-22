@@ -492,4 +492,4 @@ if __name__ == '__main__':
 	formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 	handler.setFormatter(formatter)
 	app.logger.addHandler(handler)
-	#app.run(host = '0.0.0.0', port = 5000)
+	app.run(host = '0.0.0.0', port = 5000)
