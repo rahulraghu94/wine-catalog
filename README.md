@@ -7,3 +7,5 @@ Users can login using Google Signin and acess a clickable world map which they c
 
 RESTful API architecture with versioning has been implemented to work along side a Redis server that does rate limiting.
 Currant Rate Limit is 300 queries per minute per IP adress.
+
+Also, listen to Society, by Edie Veder. OMG.
