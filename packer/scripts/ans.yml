@@ -1,0 +1,102 @@
+---
+
+# Do system updates and get necesarry applications and dependancie
+# These functions need super user access
+- hosts: all
+  become: yes
+  vars:
+    http_port: 80
+    max_clients: 200
+    project_home: /home/ubuntu/wine
+
+  tasks:
+    - name: Full System Upgrade
+      apt: upgrade=dist update_cache=yes
+
+    - name: Install Ubuntu Build Essentials
+      apt: name=build-essential state=present
+
+    - name: Install Git
+      apt: name=git state=present
+
+    - name: Install Apache2
+      apt: name=apache2 state=present
+
+    - name: Install Mod WSGI for PYTHON
+      apt: name=libapache2-mod-wsgi-py3 state=present
+
+    - name: Install Redis
+      apt: name=redis-server state=present
+
+    - name: Install PostgreSQL
+      apt: name=postgresql state=present
+
+    - name: Install PostgreSQL Dependancies
+      apt: name=postgresql-contrib state=present
+
+    - name: Install a Virtual Environment
+      pip: virtualenv_python=python3 virtualenv=/home/vagrant/wine/venv requirements=/home/ubuntu/wine/requirements.txt
+
+# Set up PostgreSQL
+# Make a user and use it types
+- hosts: all
+  become: yes
+  become_user: postgres
+  gather_facts: no
+
+  vars:
+    dbname: wine-databse
+    dbuser: ubuntu
+
+  tasks:
+  - name: ensure database is created
+    postgresql_db: name={{dbname}}
+
+  - name: ensure user has access to database
+    postgresql_user: db={{dbname}} name={{dbuser}} priv=ALL
+
+  - name: alter role of vagrant
+    command: psql -c "alter role rahul superuser createdb createrole replication"
+
+  - name: ensure no other user can access the database
+    postgresql_privs: db={{dbname}} role=PUBLIC type=database priv=ALL state=absent
+
+
+# Pull the web application from git
+# Sudo access not required
+- hosts: all
+  tasks:
+    - name: Pull Wine-Catalog Git Repo
+      git: repo=https://github.com/rahulraghu94/wine-catalog.git dest=/home/ubuntu/wine force=yes
+
+
+# Set the Apache2 Config files and restart the application if any changes
+# Granting super user access
+- hosts: all
+  become: yes
+  vars:
+    http_port: 80
+    max_clients: 200
+    project_home: /home/ubuntu/wine
+
+  tasks:
+    - name: Configure Apache2
+      copy: src=wine.conf dest=/etc/apache2/sites-available/
+
+    - name: Enable the wine.conf sites
+      command: a2ensite wine.conf
+      notify:
+        - restart apache
+
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
+
+# Start the redis server instance
+# Needs sudo
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Start Redis redis-server
+      service: name=redis-server state=started

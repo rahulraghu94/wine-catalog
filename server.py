@@ -13,14 +13,15 @@ import time
 import pg
 import logging
 from logging.handlers import RotatingFileHandler
-import urlparse
+from urllib.parse import urlparse
 import wikipedia
 
 redis = Redis()
-#db = pg.DB(dbname = 'wine-database')
-url = "postgres://yxdfmijogkeoqu:nJHb0aelUdgoS4vAQAdR35qIRg@ec2-23-21-164-237.compute-1.amazonaws.com:5432/d3rcfql3m4pa15"
-url = urlparse.urlparse(url)
-db = pg.DB(dbname = "d3rcfql3m4pa15", host = url.hostname, port = url.port, user = url.username, passwd = url.password)
+db = pg.DB(dbname = 'wine-database')
+#url = "postgres://yxdfmijogkeoqu:nJHb0aelUdgoS4vAQAdR35qIRg@ec2-23-21-164-237.compute-1.amazonaws.com:5432/d3rcfql3m4pa15"
+
+#url = urlparse(url)
+#db = pg.DB(dbname = "d3rcfql3m4pa15", host = url.hostname, port = url.port, user = url.username, passwd = url.password)
 
 app = Flask(__name__)
 
